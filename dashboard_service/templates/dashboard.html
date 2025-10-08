@@ -377,21 +377,109 @@
             color: blue;
             font-weight: bold;
         }
-    </style>
 
-    <!-- ✅ Add Google Maps API -->
-    <script
-        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC_JZJCDkPLTUsb3vFKwKQzF_PDMW5gavY&callback=initTrackingMap"
-        async defer></script>
+        /* ✅ Summary box */
+        .summary-box{
+            margin-top:12px;
+            padding:12px 16px;
+            border:1px solid #ddd;
+            border-radius:8px;
+            background:#f9fafb;
+            display:flex;
+            gap:18px;
+            flex-wrap:wrap;
+            font-weight:bold;
+        }
+        .summary-pill{
+            padding:6px 10px;
+            border-radius:999px;
+            background:#fff;
+            border:1px solid #e5e7eb;
+        }
+        .summary-paid{ color: #0a7a2f; }
+        .summary-notpaid{ color:#b30000; }
+        .summary-scofflaw{ color:#0a4db3; }
+
+        .btn.pill{
+  padding:6px 12px;border:1px solid #ddd;border-radius:16px;background:#fff;cursor:pointer
+}
+.btn.pill.active{background:#1a73e8;color:#fff;border-color:#1a73e8}
+
+/* make spacing correct when icon is on the LEFT */
+.plate-text { margin-left: 6px; margin-right: 0; letter-spacing: .3px; }
+
+.btn-icon{
+  display:inline-flex; align-items:center; justify-content:center;
+  width:22px; height:22px; border:1px solid #ddd; border-radius:4px;
+  background:#fff; cursor:pointer; vertical-align:middle;
+  margin-left:0; margin-right:6px;   /* <-- changed: right gap instead of left */
+}
+.btn-icon:hover{ background:#f3f6ff; border-color:#b9c7ff; }
+
+.btn-map .pin-dot{
+  width:10px; height:10px; border-radius:999px; background:#d9534f; display:inline-block;
+}
+
+/* === tiny square tool button + icon (like your reference UI) === */
+.tiny-square{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:22px;
+  height:22px;
+  padding:0;
+  border:1px solid #9aa0a6;
+  border-radius:3px;
+  background: linear-gradient(#ffffff, #eef2f7);
+  box-shadow: inset 0 1px 0 #ffffff, 0 1px 0 rgba(0,0,0,.04);
+  cursor:pointer;
+  vertical-align:middle;
+  margin-right:6px;   /* space before the plate text */
+}
+.tiny-square:hover{
+  background: linear-gradient(#f7faff, #e9eef8);
+  border-color:#7f8aa3;
+}
+.tiny-square:active{
+  box-shadow: inset 0 2px 3px rgba(0,0,0,.12);
+  transform: translateY(1px);
+}
+
+/* clickable coordinates in the history table */
+.goto-point {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: #1a73e8;
+  text-decoration: underline;
+  font: inherit;
+}
+
+/* 14px icon canvas */
+.ico{ width:14px; height:14px; background-size:contain; background-repeat:no-repeat; }
+
+/* Map-pin icon (inline SVG: no external file needed) */
+.ico-map{
+  background-image: url("data:image/svg+xml;utf8,\
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'>\
+  <rect width='16' height='16' rx='2' ry='2' fill='%23ffffff'/>\
+  <path d='M1 5h14M1 9h14' stroke='%23d9dee7' stroke-width='1'/>\
+  <path d='M10.5 6.5c0 1.93-2.5 4.8-2.5 4.8S5.5 8.43 5.5 6.5a2.5 2.5 0 1 1 5 0z' fill='%23d9534f'/>\
+  <circle cx='8' cy='6.3' r='1.1' fill='white'/>\
+</svg>");
+}
+
+    </style>
 
 <body>
 
     <!-- 🔹 Sidebar -->
     <div class="sidebar">
         <ul>
-            <li onclick="showSection('dashboard')"><i>🏠</i> <span>Dashboard</span></li>
-            <li onclick="showSection('dispatch-map')"><i>🗺</i> <span>Dispatch Map</span></li>
-            <li onclick="showSection('tracking')"><i>📍</i> <span>Tracking</span></li>
+            <li onclick="showSection('dashboard')"><i>🏠 </i> <span> Dashboard</span></li>
+            <li onclick="showSection('dispatch-map')"><i>🗺 </i> <span> Dispatch Map</span></li>
+            <li onclick="showSection('tracking')"><i>📍 </i> <span> Tracking</span></li>
         </ul>
     </div>
 
@@ -425,16 +513,36 @@
                 <div
                     style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                     <div style="display: flex; gap: 10px;">
-                        <input type="date" id="dateFilter" onchange="fetchDashboardData(); filterDashboardTable()"
-                            class="modern-btn" style="width: 160px;">
+                        <!-- ✅ Start / End DateTime + search -->
+                        <input type="datetime-local" id="dashStartDT" class="modern-btn" style="width: 220px;"
+                                onchange="fetchDashboardData(); filterDashboardTable()">
+                        <input type="datetime-local" id="dashEndDT" class="modern-btn" style="width: 220px;"
+                                onchange="fetchDashboardData(); filterDashboardTable()">
                         <input type="text" id="dashboardSearch" placeholder="Search Plate..."
-                            onkeyup="filterDashboardTable()" class="modern-btn" style="width: 200px;">
+                                onkeyup="filterDashboardTable()" class="modern-btn" style="width: 200px;">
+                    <!-- Status filter pills -->
+<div id="statusFilters" style="display:flex;gap:6px;align-items:center;">
+  <button class="btn pill active" data-status="all">All</button>
+  <button class="btn pill" data-status="paid">Paid</button>
+  <button class="btn pill" data-status="notpaid">Not Paid</button>
+  <button class="btn pill" data-status="scofflaw">Scofflaw</button>
+</div>
+
                     </div>
                     <div style="display: flex; gap: 10px;">
-                        <button class="modern-btn export-btn" onclick="exportDashboardToExcel()">📄 Export to
-                            Excel</button>
+                        <button class="modern-btn" onclick="fetchDashboardData()">🔄 Refresh</button>
+                        <button class="modern-btn export-btn" onclick="exportDashboardToExcel()">📄 Export to Excel</button>
                         <button class="modern-btn export-btn" onclick="exportDashboardToPDF()">🖨 Export to PDF</button>
+                        <button class="modern-btn" onclick="restoreHidden()">♻️ Restore</button>
                     </div>
+                </div>
+
+                <!-- ✅ Permanent summary box -->
+                <div id="summaryBox" class="summary-box" style="margin-top:12px; padding:12px 16px; border:1px solid #ddd; border-radius:8px; background:#f9fafb; display:flex; gap:18px; flex-wrap:wrap; font-weight:bold;">
+                    <span class="summary-pill" style="padding:6px 10px; border-radius:999px; background:#fff; border:1px solid #e5e7eb;">Total: <span id="sumTotal">0</span></span>
+                    <span class="summary-pill summary-paid" style="padding:6px 10px; border-radius:999px; background:#fff; border:1px solid #e5e7eb; color:#0a7a2f;">Paid: <span id="sumPaid">0</span></span>
+                    <span class="summary-pill summary-notpaid" style="padding:6px 10px; border-radius:999px; background:#fff; border:1px solid #e5e7eb; color:#b30000;">Not Paid: <span id="sumNotPaid">0</span></span>
+                    <span class="summary-pill summary-scofflaw" style="padding:6px 10px; border-radius:999px; background:#fff; border:1px solid #e5e7eb; color:#0a4db3;">Scofflaw: <span id="sumScofflaw">0</span></span>
                 </div>
 
                 <table>
@@ -443,13 +551,14 @@
                             <th>License Plate</th>
                             <th>Status</th>
                             <th>Time</th>
-                            <th>Notice No</th>
-                            <th>Offence</th>
-                            <th>Amount</th>
+                            <th>Image</th>
+                            <th>N. Outstanding</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody id="dashboardTable"></tbody>
                 </table>
+
             </div>
         </div>
 
@@ -457,12 +566,22 @@
         <div id="dispatch-map" class="section">
             <h2>Dispatch Map</h2>
             <div style="margin-bottom: 15px;">
-                <input type="date" id="dispatchStartDate" class="modern-btn">
-                <input type="date" id="dispatchEndDate" class="modern-btn">
+                <input type="datetime-local" id="dispatchStartDT" class="modern-btn" style="width:220px">
+                <input type="datetime-local" id="dispatchEndDT" class="modern-btn" style="width:220px">
                 <input type="text" id="dispatchSearchInput" placeholder="Search Plate..." class="modern-btn"
                     oninput="filterDispatchMarkers()">
                 <button class="modern-btn" onclick="fetchPlatesAndSummons()">Filter</button>
+                <button class="modern-btn" onclick="fetchPlatesAndSummons()">🔄 Refresh</button>
             </div>
+            <!-- 📊 Dispatch Map Summary (auto-updates) -->
+<div id="dispatchSummary" class="summary-box" style="margin-top:12px; padding:12px 16px; border:1px solid #ddd; border-radius:8px; background:#f9fafb; display:flex; gap:18px; flex-wrap:wrap; font-weight:bold;">
+  <span class="summary-pill">Markers: <span id="dmTotal">0</span></span>
+  <span class="summary-pill">Clusters: <span id="dmClusters">0</span></span>
+  <span class="summary-pill">Largest: <span id="dmLargest">0</span></span>
+  <span class="summary-pill summary-paid">Paid: <span id="dmPaid">0</span></span>
+  <span class="summary-pill summary-notpaid">Not Paid: <span id="dmNotPaid">0</span></span>
+  <span class="summary-pill summary-scofflaw">Scofflaw: <span id="dmScofflaw">0</span></span>
+</div>
             <div id="map"></div> <!-- 🔹 Map div should be here -->
         </div>
 
@@ -512,10 +631,19 @@
                 </div>
 
                 <!-- 🔘 New Modern Buttons -->
-                <div class="button-container" style="margin-top: 15px;">
+               <div class="button-container" style="margin-top: 15px;">
                     <button class="modern-btn play-btn" onclick="startPlayback()">▶️ Play</button>
                     <button class="modern-btn pause-btn" onclick="pausePlayback()">⏸ Pause</button>
                     <button class="modern-btn stop-btn" onclick="stopPlayback()">⏹ Stop</button>
+                    <button id="toggleMarkersBtn" class="modern-btn" onclick="toggleMarkers()">Show markers</button>
+
+                <!-- 🔽 Speed dropdown -->
+                    <select id="playbackSpeedSelect" class="modern-btn" onchange="applyPlaybackSpeed()">
+                        <option value="1000">Speed: 1×</option>
+                        <option value="500">Speed: 2×</option>
+                        <option value="200">Speed: 5×</option>
+                        <option value="100">Speed: 10×</option>
+                    </select>
                 </div>
 
                 <div class="tracking-table-container scrollable-table">
@@ -543,16 +671,26 @@
                             fetchDashboardData();
                         }
 
-                        if (sectionId === 'dispatch-map') {
-                            setTimeout(() => {
-                                if (dispatchMap) {
-                                    google.maps.event.trigger(dispatchMap, "resize");
-                                    fetchPlatesAndSummons(); // ✅ Refresh markers on dispatch map
-                                } else {
-                                    initDispatchMap(); // ✅ Initialize if not already initialized
-                                }
-                            }, 300);
-                        }
+                   if (sectionId === 'dispatch-map') {
+  setTimeout(() => {
+    if (dispatchMap) {
+      google.maps.event.trigger(dispatchMap, "resize");
+      fetchPlatesAndSummons();
+    } else {
+      initDispatchMap();
+    }
+
+    // ✅ After the next render cycle, focus the queued plate (if any)
+    if (dispatchMap) {
+      google.maps.event.addListenerOnce(dispatchMap, "idle", () => {
+        if (pendingFocusPlate && dispatchMarkerByPlate[pendingFocusPlate]) {
+          focusPlateOnDispatch(pendingFocusPlate);
+          pendingFocusPlate = null;
+        }
+      });
+    }
+  }, 300);
+}
 
                         if (sectionId === 'tracking') {
                             setTimeout(() => {
@@ -563,11 +701,111 @@
                         }
                     }
 
-                    // ✅ Refresh Dispatch Map Data Every 5 Seconds
-                    setInterval(fetchPlatesAndSummons, 5000);
-
                     let dispatchMap;
                     let dispatchMarkers = [];
+
+  // keep these globals
+  let dispatchMarkerByPlate = {};
+  let pendingFocusPlate = null;
+  let openInfoWindow = null;
+
+  // --- wait until dispatchMap is created (Tab switched + map constructed) ---
+function waitForDispatchReady() {
+  return new Promise(resolve => {
+    const tick = () => {
+      if (dispatchMap && typeof google !== "undefined" && google.maps) {
+        resolve(true);
+      } else {
+        setTimeout(tick, 50);
+      }
+    };
+    tick();
+  });
+}
+
+async function goToDispatchMap(plate) {
+  const key = String(plate || '').trim().toUpperCase();
+  pendingFocusPlate = key;
+
+  // sync Dispatch dates to Dashboard
+  const { start, end } = getDashRange();
+  const ds = document.getElementById('dispatchStartDT');
+  const de = document.getElementById('dispatchEndDT');
+  if (ds && start) ds.value = start;
+  if (de && end)   de.value = end;
+
+  // switch tab & wait until map is ready
+  showSection('dispatch-map');
+  await waitForDispatchReady();
+
+  // start with NO text filter so we don't hide everything
+  const search = document.getElementById('dispatchSearchInput');
+  if (search) search.value = '';
+
+  // first attempt with same time window
+  await fetchPlatesAndSummons();
+
+  // if plate exists now, apply filter + focus
+  if (dispatchMarkerByPlate[key]) {
+    if (search) search.value = key;
+    filterDispatchMarkers();
+    focusPlateOnDispatch(key);
+    pendingFocusPlate = null;
+    return;
+  }
+
+  // widen the window to last 7 days
+  const now = new Date();
+  const weekAgo = new Date(now.getTime() - 7*24*60*60*1000);
+  const pad = n => String(n).padStart(2,'0');
+  const toLocalDT = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  if (ds && de) {
+    ds.value = toLocalDT(weekAgo);
+    de.value = toLocalDT(now);
+  }
+
+  await fetchPlatesAndSummons();
+
+  if (dispatchMarkerByPlate[key]) {
+    if (search) search.value = key;
+    filterDispatchMarkers();
+    focusPlateOnDispatch(key);
+  } else {
+    // plate still not found — clear the filter so user sees everything
+    if (search) search.value = '';
+    filterDispatchMarkers();
+    alert(`Marker for ${key} not found in the selected or the last 7 days range.`);
+  }
+
+  pendingFocusPlate = null;
+}
+
+function focusPlateOnDispatch(plate) {
+  const key = String(plate || '').trim().toUpperCase();
+  const marker = dispatchMarkerByPlate[key];
+  if (!marker) { alert(`Marker for ${key} not found.`); return; }
+
+  const pos = marker.getPosition();
+
+  // Go to street level
+  dispatchMap.setCenter(pos);
+  dispatchMap.setZoom(20);
+
+  // Force raw markers at this zoom (no cluster bubble)
+  setClusterEnabled(false);
+
+  // Info window
+  if (!openInfoWindow) openInfoWindow = new google.maps.InfoWindow();
+  openInfoWindow.setContent(marker.infoHtml || `<b>${key}</b>`);
+  openInfoWindow.open(dispatchMap, marker);
+
+  // Emphasis
+  marker.setAnimation(google.maps.Animation.BOUNCE);
+  setTimeout(() => marker.setAnimation(null), 1400);
+
+  // Keep centered after render
+  setTimeout(() => dispatchMap.panTo(pos), 250);
+}
 
                     function initDispatchMap() {
                         let dispatchMapDiv = document.getElementById("map");
@@ -577,36 +815,26 @@
                             return;
                         }
 
-                        dispatchMap = new google.maps.Map(dispatchMapDiv, {
-                            center: { lat: 3.1390, lng: 101.6869 }, // Default Kuala Lumpur
-                            zoom: 10,
-                            mapTypeId: "roadmap"
-                        });
+                     dispatchMap = new google.maps.Map(dispatchMapDiv, {
+  center: { lat: 3.1390, lng: 101.6869 },
+  zoom: 10,
+  mapTypeId: "roadmap"
+});
 
+// ✅ Recompute counters whenever the map view settles
+google.maps.event.addListener(dispatchMap, "idle", () => {
+  if (markerCluster) renderDispatchSummary(markerCluster, dispatchMarkers);
+});
+
+// ✅ Turn clustering off when zoomed in (street level), back on when zoomed out
+google.maps.event.addListener(dispatchMap, "zoom_changed", () => {
+  const z = dispatchMap.getZoom() || 0;
+  setClusterEnabled(z < 18);   // cluster when zoomed out; raw pins when zoomed in
+});
 
                         console.log("✅ Dispatch Map Initialized");
 
                         fetchPlatesAndSummons(); // ✅ Fetch detected plates & summons
-                    }
-
-
-                    // ✅ Initialize Tracking Map
-                    function initTrackingMap() {
-                        trackingMap = new google.maps.Map(document.getElementById("liveTrackingMap"), {
-                            center: { lat: 3.139, lng: 101.6869 }, zoom: 13
-                        });
-                        historicalTrackingMap = new google.maps.Map(document.getElementById("historicalTrackingMap"), {
-                            center: { lat: 3.139, lng: 101.6869 }, zoom: 13
-                        });
-                    }
-
-                    // 🔹 STEP 3: Ensure the Map Updates When Displayed
-                    function updateMap() {
-                        setTimeout(() => {
-                            if (map) {
-                                map.invalidateSize(); // 🔹 Fixes the map alignment issue
-                            }
-                        }, 500); // 🔹 Short delay to ensure it loads before resizing
                     }
 
                     let plateMarkers = {}; // Store markers to avoid duplicatio
@@ -623,214 +851,495 @@
                         }
                     }
 
-                    function filterDashboardTable() {
-                        const inputPlate = document.getElementById("dashboardSearch").value.toUpperCase();
-                        const inputDate = document.getElementById("dateFilter").value;
-                        const rows = document.querySelectorAll("#dashboardTable tr");
+                    // ---------- Dashboard datetime helpers ----------
+function setDefaultDashRange() {
+  // Start = today 00:00, End = now (local)
+  const now = new Date();
+  const start = new Date();
+  start.setHours(0,0,0,0);
 
-                        rows.forEach(row => {
-                            const plateCell = row.querySelector("td:nth-child(1)");
-                            const timeCell = row.querySelector("td:nth-child(3)");
+  // "YYYY-MM-DDTHH:MM" (local)
+  const pad = n => String(n).padStart(2,'0');
+  const toLocalDT = d =>
+    `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 
-                            if (!plateCell || !timeCell) return;
+  const s = document.getElementById('dashStartDT');
+  const e = document.getElementById('dashEndDT');
+  if (s && !s.value) s.value = toLocalDT(start);
+  if (e && !e.value) e.value = toLocalDT(now);
+}
 
-                            const plateText = plateCell.textContent.toUpperCase();
-                            const dateOnly = timeCell.textContent.trim().split(" ")[0]; // Get date part
+function getDashRange() {
+  const s = document.getElementById('dashStartDT')?.value;
+  const e = document.getElementById('dashEndDT')?.value;
+  return { start: s, end: e };
+}
 
-                            const matchPlate = !inputPlate || plateText.includes(inputPlate);
-                            const matchDate = !inputDate || dateOnly === inputDate;
+// Parse "YYYY-MM-DD HH:MM:SS" (from DB) or "YYYY-MM-DDTHH:MM" (fallback)
+function parsePlateTime(t) {
+  if (!t) return null;
+  const isoish = t.includes('T') ? t : t.replace(' ', 'T');
+  const d = new Date(isoish);
+  return isNaN(d.getTime()) ? null : d;
+}
 
-                            row.style.display = (matchPlate && matchDate) ? "" : "none";
-                        });
-                    }
+let currentStatus = 'all'; // all | paid | notpaid | scofflaw
 
-                    function exportDashboardToExcel() {
-                        const rows = document.querySelectorAll("#dashboardTable tr");
-                        let csv = "License Plate,Status,Time,Notice No,Offence,Amount\n";
+function normalizeStatus(txt){
+  const s = (txt || '').toLowerCase();
+  if (s.includes('scofflaw')) return 'scofflaw';
+  if (s.includes('not paid') || s.includes('unpaid') || s.includes('overdue')) return 'notpaid';
+  if (s.includes('paid')) return 'paid';
+  return 'unknown';
+}
 
-                        rows.forEach(row => {
-                            const cells = row.querySelectorAll("td");
-                            if (cells.length > 0) {
-                                csv += Array.from(cells).map(cell => cell.innerText).join(",") + "\n";
-                            }
-                        });
+function filterDashboardTable() {
+  const inputPlate = document.getElementById("dashboardSearch").value.toUpperCase();
+  const { start, end } = getDashRange();
+  const sDT = start ? new Date(start) : null;
+  const eDT = end ? new Date(end) : null;
+  const rows = document.querySelectorAll("#dashboardTable tr");
 
-                        const blob = new Blob([csv], { type: "text/csv" });
-                        const url = window.URL.createObjectURL(blob);
-                        const a = document.createElement("a");
-                        a.href = url;
-                        a.download = "dashboard_data.csv";
-                        a.click();
-                        window.URL.revokeObjectURL(url);
-                    }
+  rows.forEach(row => {
+    const plateCell  = row.querySelector("td:nth-child(1)");
+    const statusCell = row.querySelector("td:nth-child(2)");   // 👈 NEW
+    const timeCell   = row.querySelector("td:nth-child(3)");
+    if (!plateCell || !timeCell || !statusCell) return;
 
-                    function exportDashboardToPDF() {
-                        const { jsPDF } = window.jspdf;
-                        const doc = new jsPDF();
+    const plateText  = plateCell.textContent.toUpperCase();
+    const rowTime    = parsePlateTime(timeCell.textContent.trim());
+    const statusKey  = normalizeStatus(statusCell.textContent); // 👈 NEW
 
-                        doc.setFontSize(14);
-                        doc.text("Detected Plates & Summons Queue", 14, 20);
+    const passPlate  = !inputPlate || plateText.includes(inputPlate);
+    const passRange  = (!sDT || !eDT || (rowTime && rowTime >= sDT && rowTime <= eDT));
+    const passStatus = (currentStatus === 'all') || (statusKey === currentStatus); // 👈 NEW
 
-                        const headers = [["License Plate", "Status", "Time", "Notice No", "Offence", "Amount"]];
-                        const rows = [];
+    row.style.display = (passPlate && passRange && passStatus) ? "" : "none";
+  });
 
-                        document.querySelectorAll("#dashboardTable tr").forEach(row => {
-                            const cols = Array.from(row.querySelectorAll("td")).map(cell => cell.innerText);
-                            if (cols.length) rows.push(cols);
-                        });
+  updateSummaryFromTable(); // counts visible rows only (already in your code)
+}
 
-                        doc.autoTable({
-                            head: headers,
-                            body: rows,
-                            startY: 30,
-                            theme: "grid"
-                        });
+async function fillOutstandingAndPdf() {
+  const cells = document.querySelectorAll('td.n-outstanding');
 
-                        doc.save("dashboard_data.pdf");
-                    }
+ for (const cell of cells) {
+    const plate = (cell.getAttribute('data-plate') || '').trim();
+    const tr = cell.closest('tr');
+    const timeText = tr?.querySelector('td:nth-child(3)')?.textContent?.trim() || ''; // "YYYY-MM-DD HH:MM:SS"
+
+    // loading state in the count cell
+    cell.textContent = '...';
+
+    try {
+      const r = await fetch(`/api/summons/${encodeURIComponent(plate)}`);
+      if (!r.ok) throw new Error(await r.text());
+      const js = await r.json();
+
+      // accept {count}, {total}, or {items:[...]}
+      const count =
+        (typeof js.count === 'number' ? js.count : undefined) ??
+        (typeof js.total === 'number' ? js.total : undefined) ??
+        (Array.isArray(js.items) ? js.items.length : 0);
+
+      // 🔹 render number + in-cell PDF button
+      const safeCount = String(count ?? 0);
+      const btn = (count ?? 0) > 0
+        ? `<button class="modern-btn" style="padding:4px 8px;font-size:12px;margin-left:6px;"
+             onclick="downloadRowPDF('${plate}','${timeText}')">📄 PDF</button>`
+        : '';
+
+      cell.innerHTML = `<span>${safeCount}</span>${btn}`;
+    } catch (e) {
+      console.warn('Summons fetch failed for', plate, e);
+      cell.innerHTML = `<span>0</span>`;
+    }
+  }
+}
+  
+// ---------- Dispatch datetime helpers ----------
+function setDefaultDispatchRange() {
+  const now = new Date();
+  const start = new Date(); start.setHours(0,0,0,0);
+  const pad = n => String(n).padStart(2,'0');
+  const toLocalDT = d =>
+    `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+
+  const s = document.getElementById('dispatchStartDT');
+  const e = document.getElementById('dispatchEndDT');
+  if (s && !s.value) s.value = toLocalDT(start);
+  if (e && !e.value) e.value = toLocalDT(now);
+}
+
+function getDispatchRange() {
+  return {
+    start: document.getElementById('dispatchStartDT')?.value || "",
+    end:   document.getElementById('dispatchEndDT')?.value   || ""
+  };
+}
+
+function exportDashboardToExcel() {
+  const rows = document.querySelectorAll("#dashboardTable tr");
+  let csv = "License Plate,Status,Time,No. Outstanding\n";
+  rows.forEach(row => {
+    const c = row.querySelectorAll("td");
+    if (c.length >= 5) {
+      csv += [
+        c[0].innerText.trim(), // plate
+        c[1].innerText.trim(), // status
+        c[2].innerText.trim(), // time
+        c[4].innerText.trim()  // N. Outstanding (skip image col)
+      ].join(",") + "\n";
+    }
+  });
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = Object.assign(document.createElement("a"), { href: url, download: "dashboard_data.csv" });
+  a.click(); URL.revokeObjectURL(url);
+}
+
+function exportDashboardToPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  doc.setFontSize(14);
+  doc.text("Detected Plates & Summons Queue", 14, 20);
+
+  const headers = [["License Plate", "Status", "Time", "No. Outstanding"]];
+  const rows = [];
+  document.querySelectorAll("#dashboardTable tr").forEach(row => {
+    const c = row.querySelectorAll("td");
+    if (c.length >= 5) {
+      rows.push([
+        c[0].innerText.trim(),
+        c[1].innerText.trim(),
+        c[2].innerText.trim(),
+        c[4].innerText.trim()
+      ]);
+    }
+  });
+  doc.autoTable({ head: headers, body: rows, startY: 30, theme: "grid" });
+  doc.save("dashboard_data.pdf");
+}
+
+function downloadRowPDF(plate, time) {
+  const q = new URLSearchParams({ plate });
+  if (time) q.append('time', time); // helps the backend pick the exact row
+
+  fetch('/api/generate-summons-pdf?' + q.toString())
+    .then(r => { if (!r.ok) throw new Error('Failed to generate PDF'); return r.blob(); })
+    .then(blob => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${plate}_summons.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    })
+    .catch(e => alert('❌ ' + e.message));
+}
+
+// --- Global hide helpers (server-backed) ---
+async function hidePlateGlobally(plate) {
+  const resp = await fetch('/api/hidden-plates', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ plate })
+  });
+  if (!resp.ok) throw new Error('Failed to hide on server');
+}
+
+async function clearHiddenPlatesGlobally() {
+  const resp = await fetch('/api/hidden-plates', { method: 'DELETE' });
+  if (!resp.ok) throw new Error('Failed to clear hidden plates on server');
+}
+
+async function getHiddenPlatesFromServer() {
+  try {
+    const r = await fetch('/api/hidden-plates');
+    if (!r.ok) return new Set();
+    const arr = await r.json();
+    return new Set((arr || []).map(x => String(x).toUpperCase().trim()));
+  } catch {
+    return new Set();
+  }
+}
+
+// Button handler for "♻️ Restore Hidden"
+async function restoreHidden(){
+  if (!confirm('Restore all hidden plate?')) return;
+  try {
+    await clearHiddenPlatesGlobally();
+    // Refresh both views
+    if (typeof fetchDashboardData === 'function') fetchDashboardData();
+    if (typeof fetchPlatesAndSummons === 'function') fetchPlatesAndSummons();
+  } catch (e) {
+    alert('Failed to restore on server.');
+  }
+}
+
+let markerCluster;
+
+function setClusterEnabled(enabled) {
+  if (!markerCluster) return;
+
+  if (enabled) {
+    // Let the clusterer own the markers
+    dispatchMarkers.forEach(m => m.setMap(null));
+    markerCluster.setMap(dispatchMap);
+    markerCluster.repaint();
+  } else {
+    // Show raw markers; disable cluster bubbles
+    markerCluster.setMap(null);
+    dispatchMarkers.forEach(m => m.setMap(dispatchMap));
+  }
+}
+
+async function fetchPlatesAndSummons() {
+  const { start, end } = getDispatchRange();
+
+  let url = "/api/received-plates";
+  if (start && end) {
+    url += `?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`;
+  }
+
+  // Get hidden plates from server (so all browsers are consistent)
+  const hiddenSet = await getHiddenPlatesFromServer();
+
+  return fetch(url)
+    .then(resp => resp.json())
+    .then(detectedPlates => {
+      // Clear existing markers/cluster
+      dispatchMarkers.forEach(m => m.setMap(null));
+dispatchMarkers = [];
+dispatchMarkerByPlate = {};   // <-- add this line
+if (markerCluster) { markerCluster.setMap(null); markerCluster = null; }
+
+      let firstValidPosition = null;
+
+      detectedPlates.forEach(plate => {
+        const plateNumber = (plate.plate || "").trim().toUpperCase();
+        if (hiddenSet.has(plateNumber)) return; // 🚫 hide globally
+
+        const lat = parseFloat(plate.latitude);
+        const lng = parseFloat(plate.longitude);
+        if (!isFinite(lat) || !isFinite(lng)) return;
+
+        const position = { lat, lng };
+        if (!firstValidPosition) firstValidPosition = position;
+
+        const plateStatus = (plate.status || "").toLowerCase().trim();
+
+        let infoColor = "", statusText = "", iconUrl = "";
+        if (plateStatus.includes("scofflaw")) {
+          infoColor = "blue";  statusText = "Scofflaw Alert";        iconUrl = "http://maps.google.com/mapfiles/ms/icons/blue-dot.png";
+        } else if (plateStatus.includes("not paid")) {
+          infoColor = "red";   statusText = "Parking Rights Alert";  iconUrl = "http://maps.google.com/mapfiles/ms/icons/red-dot.png";
+        } else if (plateStatus.includes("paid")) {
+          infoColor = "green"; statusText = "Read";                  iconUrl = "http://maps.google.com/mapfiles/ms/icons/green-dot.png";
+        } else {
+          infoColor = "gray";  statusText = "Unknown";               iconUrl = "http://maps.google.com/mapfiles/ms/icons/gray-dot.png";
+        }
+
+        const imageUrl = plate.snapshot?.startsWith("http") ? plate.snapshot : "/static/default-car.png";
+        const infoWindowContent = `
+          <div style="border: 3px solid ${infoColor}; border-radius: 8px; background: #fff; padding: 10px; text-align: center; width: 250px;">
+            <div style="background: ${infoColor}; color: white; font-weight: bold; padding: 5px; border-radius: 6px;">${statusText}</div>
+            <p><strong>Plate:</strong> ${plateNumber}</p>
+            <p><strong>Status:</strong> ${plate.status || "-"}</p>
+            <p><strong>Officer ID:</strong> ${plate.officer_id || "N/A"}</p>
+            <p><strong>Time:</strong> ${plate.time || "-"}</p>
+            <img src="${imageUrl}" onerror="this.onerror=null; this.src='/static/default-car.png';"
+                 alt="Vehicle Image" style="width: 100%; height: auto; margin-top: 5px; border-radius: 5px; border: 2px solid ${infoColor};">
+          </div>`;
+
+        const marker = new google.maps.Marker({
+          position,
+          title: `Plate: ${plateNumber}`,
+          icon: { url: iconUrl },
+          plateStatus,
+          plateNumber
+        });
+
+        const infoWindow = new google.maps.InfoWindow({ content: infoWindowContent });
+        marker.addListener("click", () => infoWindow.open(dispatchMap, marker));
+        dispatchMarkers.push(marker);
+
+        marker.infoHtml = infoWindowContent;            // reuse when focusing programmatically
+dispatchMarkerByPlate[plateNumber] = marker;    // index by plate
+
+      });
+
+      // ✅ Optional: Fit the map bounds to all markers
+if (dispatchMarkers.length) {
+  const bounds = new google.maps.LatLngBounds();
+  dispatchMarkers.forEach(m => bounds.extend(m.getPosition()));
+  dispatchMap.fitBounds(bounds);
+}
+
+// Clusterer
+markerCluster = new markerClusterer.MarkerClusterer({
+  map: dispatchMap,
+  markers: dispatchMarkers,
+  minClusterSize: 2,
+  algorithm: new markerClusterer.SuperClusterAlgorithm({
+    maxZoom: 16,   // 👈 clusters stop above 16 (so zoom 19/20 = single pin)
+    minPoints:2,
+    radius: 80
+  }),
+  renderer: {
+    render: ({ count, position, markers }) => {
+      let red = 0, green = 0, blue = 0;
+      markers.forEach(m => {
+        const s = (m.plateStatus || "").toLowerCase();
+        if (s.includes("scofflaw")) blue++;
+        else if (s.includes("not paid")) red++;
+        else if (s.includes("paid")) green++;
+      });
+      let dominant = "gray";
+      if (red >= green && red >= blue) dominant = "red";
+      else if (green >= red && green >= blue) dominant = "green";
+      else if (blue >= red && blue >= green) dominant = "blue";
+
+      const svg = window.btoa(`
+        <svg xmlns='http://www.w3.org/2000/svg' width='50' height='50'>
+          <circle cx='25' cy='25' r='20' fill='${dominant}' />
+          <text x='25' y='30' text-anchor='middle' fill='white' font-size='16'>${count}</text>
+        </svg>`);
+      return new google.maps.Marker({
+        position,
+        icon: { url: `data:image/svg+xml;base64,${svg}`, scaledSize: new google.maps.Size(50,50) }
+      });
+    }
+  }
+});
+
+      // ✅ hook summary updates
+attachDispatchSummary(markerCluster);
+
+// Respect current zoom on first paint
+setClusterEnabled((dispatchMap.getZoom() || 0) < 18);
 
 
-                    let markerCluster;
+      if (firstValidPosition) {
+        dispatchMap.setCenter(firstValidPosition);
+        dispatchMap.setZoom(14);
+      }
 
-                    function fetchPlatesAndSummons() {
-                        const start = document.getElementById("dispatchStartDate")?.value;
-                        const end = document.getElementById("dispatchEndDate")?.value;
+if (typeof filterDispatchMarkers === "function") filterDispatchMarkers();
 
-                        let url = "/api/received-plates";
-                        if (start && end) {
-                            url += `?start=${start}&end=${end}`;
-                        }
+// ✅ If user clicked "Map" earlier, focus once the map settles
+if (pendingFocusPlate) {
+  const toFocus = pendingFocusPlate; // keep a local copy
+  google.maps.event.addListenerOnce(dispatchMap, "idle", () => {
+    if (dispatchMarkerByPlate[toFocus]) {
+      focusPlateOnDispatch(toFocus);
+    } else {
+      alert(`Marker for ${toFocus} not found in this range.`);
+    }
+    pendingFocusPlate = null; // consume the request
+  });
 
-                        fetch(url)
-                            .then(response => response.json())
-                            .then(detectedPlates => {
-                                dispatchMarkers.forEach(marker => marker.setMap(null));
-                                dispatchMarkers = [];
+  // Nudge the map so 'idle' fires promptly (no visual change)
+  dispatchMap.setZoom(dispatchMap.getZoom());
+}
 
-                                if (markerCluster) {
-                                    markerCluster.setMap(null);
-                                }
+    })
+    .catch(err => console.error("❌ Error fetching plates:", err));
+}
 
-                                let firstValidPosition = null;
+function filterDispatchMarkers() {
+  const input = document.getElementById("dispatchSearchInput");
+  const query = (input?.value || "").trim().toUpperCase();
 
-                                detectedPlates.forEach((plate) => {
-                                    if (!plate.latitude || !plate.longitude) return;
+  let matchCount = 0;
+  dispatchMarkers.forEach(marker => {
+    const plate = marker.plateNumber || "";
+    const visible = !query || plate.includes(query);
+    marker.setVisible(visible);
+    if (visible && query) matchCount++;
+  });
 
-                                    const position = { lat: plate.latitude, lng: plate.longitude };
-                                    const plateNumber = plate.plate.trim().toUpperCase();
-                                    const plateStatus = plate.status.toLowerCase().trim();
+  if (markerCluster) {
+    markerCluster.repaint();
+    renderDispatchSummary(markerCluster, dispatchMarkers);
+  }
 
-                                    if (!firstValidPosition) {
-                                        firstValidPosition = position;
-                                    }
+  // if user typed an exact plate and it exists — focus it
+  if (query && dispatchMarkerByPlate[query]) {
+    focusPlateOnDispatch(query);
+    return;
+  }
 
-                                    let infoColor = "", statusText = "", iconUrl = "";
-                                    if (plateStatus.includes("scofflaw")) {
-                                        infoColor = "blue";
-                                        statusText = "Scofflaw Alert";
-                                        iconUrl = "http://maps.google.com/mapfiles/ms/icons/blue-dot.png";
-                                    } else if (plateStatus.includes("not paid")) {
-                                        infoColor = "red";
-                                        statusText = "Parking Rights Alert";
-                                        iconUrl = "http://maps.google.com/mapfiles/ms/icons/red-dot.png";
-                                    } else if (plateStatus.includes("paid")) {
-                                        infoColor = "green";
-                                        statusText = "Read";
-                                        iconUrl = "http://maps.google.com/mapfiles/ms/icons/green-dot.png";
-                                    } else {
-                                        infoColor = "gray";
-                                        statusText = "Unknown";
-                                        iconUrl = "http://maps.google.com/mapfiles/ms/icons/gray-dot.png";
-                                    }
+  // if a filter was applied but nothing matched, clear it so the map isn't empty
+  if (query && matchCount === 0) {
+    if (input) input.value = '';
+    dispatchMarkers.forEach(m => m.setVisible(true));
+    if (markerCluster) {
+      markerCluster.repaint();
+      renderDispatchSummary(markerCluster, dispatchMarkers);
+    }
+    alert("No markers match that plate in this time range. Showing all markers again.");
+  }
+}
 
-                                    const imageUrl = plate.snapshot?.startsWith("http") ? plate.snapshot : "/static/default-car.png";
+                    // ---- Dispatch Summary Helpers ----
+function getClusterSizesV2(mc) {
+  // Works for @googlemaps/markerclusterer v2
+  const clusters =
+    mc?.clusters ?? (typeof mc.getClusters === "function" ? mc.getClusters() : []);
+  return Array.isArray(clusters) ? clusters.map(c => (c.markers ? c.markers.length : 0)) : [];
+}
 
-                                    const infoWindowContent = `
-                    <div style="border: 3px solid ${infoColor}; border-radius: 8px; background: #fff; padding: 10px; text-align: center; width: 250px;">
-                        <div style="background: ${infoColor}; color: white; font-weight: bold; padding: 5px; border-radius: 6px;">
-                            ${statusText}
-                        </div>
-                        <p><strong>Plate:</strong> ${plateNumber}</p>
-                        <p><strong>Status:</strong> ${plate.status}</p>
-                        <p><strong>Officer ID:</strong> ${plate.officer_id || "N/A"}</p>
-                        <p><strong>Time:</strong> ${plate.time}</p>
-                        <img src="${imageUrl}" 
-                            onerror="this.onerror=null; this.src='/static/default-car.png';"
-                            alt="Vehicle Image" 
-                            style="width: 100%; height: auto; margin-top: 5px; border-radius: 5px; border: 2px solid ${infoColor};">
-                    </div>`;
+// ✅ Count only markers that are visible AND inside the current map viewport
+function countVisibleInViewport(markers, map) {
+  const b = map?.getBounds?.();
+  let paid = 0, notPaid = 0, scofflaw = 0, total = 0;
 
-                                    const marker = new google.maps.Marker({
-                                        position,
-                                        title: `Plate: ${plateNumber}`,
-                                        icon: { url: iconUrl },
-                                        plateStatus: plateStatus,
-                                        plateNumber: plateNumber
-                                    });
+  (markers || []).forEach(m => {
+    if (m.getVisible && !m.getVisible()) return;          // must be visible
+    const pos = m.getPosition?.();                         // must be in viewport
+    if (b && pos && !b.contains(pos)) return;
 
-                                    const infoWindow = new google.maps.InfoWindow({ content: infoWindowContent });
-                                    marker.addListener("click", () => infoWindow.open(dispatchMap, marker));
-                                    dispatchMarkers.push(marker);
-                                });
+    total++;
+    const s = (m.plateStatus || "").toLowerCase();
+    if (s.includes("scofflaw")) scofflaw++;
+    else if (s.includes("not paid") || s.includes("unpaid")) notPaid++;
+    else if (s.includes("paid")) paid++;
+  });
 
-                                // ✅ NEW CLUSTER LOGIC with SVG and count
-                                markerCluster = new markerClusterer.MarkerClusterer({
-                                    map: dispatchMap,
-                                    markers: dispatchMarkers,
-                                    renderer: {
-                                        render: ({ count, position, markers }) => {
-                                            let red = 0, green = 0, blue = 0;
-                                            markers.forEach(marker => {
-                                                if (marker.plateStatus.includes("scofflaw")) blue++;
-                                                else if (marker.plateStatus.includes("not paid")) red++;
-                                                else if (marker.plateStatus.includes("paid")) green++;
-                                            });
+  return { total, paid, notPaid, scofflaw };
+}
 
-                                            let dominant = "gray";
-                                            if (red >= green && red >= blue) dominant = "red";
-                                            else if (green >= red && green >= blue) dominant = "green";
-                                            else if (blue >= red && blue >= green) dominant = "blue";
+function renderDispatchSummary(markerClusterer, markers) {
+  // cluster metrics
+  const sizes = getClusterSizesV2(markerClusterer);
+  const numClusters = sizes.length;
+  const largest = sizes.length ? Math.max(...sizes) : 0;
 
-                                            const svg = window.btoa(`
-                            <svg xmlns='http://www.w3.org/2000/svg' width='50' height='50'>
-                                <circle cx='25' cy='25' r='20' fill='${dominant}' />
-                                <text x='25' y='30' text-anchor='middle' fill='white' font-size='16'>${count}</text>
-                            </svg>`);
+  // status breakdown from visible markers
+  const statusCounts = countVisibleInViewport(markers, dispatchMap);
 
-                                            return new google.maps.Marker({
-                                                position,
-                                                icon: {
-                                                    url: `data:image/svg+xml;base64,${svg}`,
-                                                    scaledSize: new google.maps.Size(50, 50)
-                                                }
-                                            });
-                                        }
-                                    }
-                                });
+  // update UI
+  const S = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  S("dmTotal", statusCounts.total);
+  S("dmClusters", numClusters);
+  S("dmLargest", largest);
+  S("dmPaid", statusCounts.paid);
+  S("dmNotPaid", statusCounts.notPaid);
+  S("dmScofflaw", statusCounts.scofflaw);
+}
 
-                                if (!window.mapInitialized && firstValidPosition) {
-                                    dispatchMap.setCenter(firstValidPosition);
-                                    dispatchMap.setZoom(14);
-                                    window.mapInitialized = true; // ✅ Only center once
-                                }
+function attachDispatchSummary(markerClusterer) {
+  // initial paint
+  renderDispatchSummary(markerClusterer, dispatchMarkers);
 
-                            })
-                            .catch(error => console.error("❌ Error fetching plates:", error));
-                    }
-
-                    function filterDispatchMarkers() {
-                        const query = document.getElementById("dispatchSearchInput").value.trim().toUpperCase();
-
-                        dispatchMarkers.forEach(marker => {
-                            const plate = marker.plateNumber || "";
-                            marker.setVisible(!query || plate.includes(query));
-                        });
-
-                        // Refresh cluster display
-                        if (markerCluster) {
-                            markerCluster.repaint();
-                        }
-                    }
+  // ✅ use google.maps.event.addListener
+  google.maps.event.addListener(markerClusterer, "clusteringend", () => {
+    renderDispatchSummary(markerClusterer, dispatchMarkers);
+  });
+}
 
                     let trackingMap;
                     let historicalTrackingMap;
@@ -850,6 +1359,8 @@
                             mapTypeId: "roadmap"
                         });
                     }
+
+                    window.initTrackingMap = initTrackingMap;
 
                     let trackingPolyline = null;
                     let liveMarkers = []; // Store breadcrumb markers
@@ -972,6 +1483,12 @@
 
                                 console.log("✅ Valid Playback Data:", playbackData);
 
+                                // ✅ Reset playback state for a fresh run
+stopPlayback();
+playbackIndex = 0;
+isPaused = false;
+clearPlaybackOverlays();
+
                                 if (playbackData.length === 0) {
                                     alert("❌ All points were invalid. Check API data.");
                                     return;
@@ -1002,7 +1519,13 @@
                             zoom: 13,
                             mapTypeId: "roadmap"
                         });
-                    }
+
+                        // also reset the marker toggle + clear existing overlays
+                        showMarkers = false;
+                        const tmb2 = document.getElementById('toggleMarkersBtn');
+                        if (tmb2) tmb2.textContent = 'Show markers';
+                        clearPlaybackOverlays();
+                        }
 
                     function showTrackingTab(type) {
                         document.getElementById("liveTrackingTab").style.display = (type === 'live') ? 'block' : 'none';
@@ -1013,14 +1536,6 @@
                             google.maps.event.trigger(type === 'live' ? trackingMap : historicalTrackingMap, "resize");
                         }, 300);
                     }
-
-                    window.onload = function () {
-                        fetchDashboardData();  // ✅ Keep this line
-                        initTrackingMap();
-                        setInterval(updateTracking, 5000);
-                        showTrackingTab("live"); // Default tab
-                    };
-
 
                     let plateNumber = new URLSearchParams(window.location.search).get("plate");
 
@@ -1045,206 +1560,461 @@
                         }
                     });
 
-                    let playbackData = [];
-                    let playbackIndex = 0;
-                    let playbackInterval = null;
-                    let playbackMarker = null;
-                    let playbackPolyline = null;
-                    let playbackPath = null;
-                    let isPaused = false;
+// 🔧 Playback globals
+let playbackData = [];
+let playbackIndex = 0;
+let playbackInterval = null;
+let playbackMarker = null;
+let playbackPath = null;
+let isPaused = false;
+let playbackSpeed = 1000; // ms per point (1× default)
+let showMarkers = false; // default: markers hidden
 
-                    function exportPlaybackToExcel() {
-                        if (!playbackData.length) {
-                            alert("No data to export.");
-                            return;
-                        }
+// Each playback "tick" jumps 30 data points (≈30s)
+const STEP_SIZE = 30;
 
-                        let csv = "Time,Latitude,Longitude,Speed (km/h)\n";
-                        playbackData.forEach(entry => {
-                            csv += `${entry.time},${entry.lat},${entry.lng},${entry.speed}\n`;
-                        });
+// Only drop a visible point marker every N steps.
+// e.g. 10 → one marker every 10×30s = every 5 minutes.
+const MARKER_INTERVAL_STEPS = 2;
 
-                        const blob = new Blob([csv], { type: 'text/csv' });
-                        const url = window.URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.download = 'historical_tracking.csv';
-                        a.click();
-                        window.URL.revokeObjectURL(url);
-                    }
+// Extra helpers for markers and info popups
+let playbackInfoWnd = new google.maps.InfoWindow();
+const playbackMarkers = [];
+const markerLookup = new Map();
 
-                    let idleStartTime = null;
-                    let idleEntries = [];
+function keyFromLatLng(lat, lng) {
+  return `${Number(lat).toFixed(6)},${Number(lng).toFixed(6)}`;
+}
 
-                    function startPlayback(speed = 1000) {
-                        if (!playbackData.length) {
-                            alert("❌ No data available. Please search first.");
-                            return;
-                        }
+function clearPlaybackOverlays() {
+  playbackMarkers.forEach(m => m.setMap(null));
+  playbackMarkers.length = 0;
+  markerLookup.clear();
+  if (playbackPath) playbackPath.setPath([]);
+}
 
-                        console.log("▶️ Start Playback with", playbackData.length, "points");
+function addPlaybackMarker(p) {
+  const k = keyFromLatLng(p.lat, p.lng);
+  let marker = markerLookup.get(k);
 
-                        // Reset previous playback
-                        clearInterval(playbackInterval);
-                        if (playbackMarker) playbackMarker.setMap(null);
-                        if (playbackPath) playbackPath.setMap(null);
+  if (!marker) {
+    const pos = { lat: p.lat, lng: p.lng };
+    marker = new google.maps.Marker({
+      position: pos,
+      map: showMarkers ? historicalTrackingMap : null, // only show if enabled
+      icon: {
+        path: google.maps.SymbolPath.CIRCLE,
+        scale: 4,
+        strokeWeight: 2,
+        strokeColor: '#d93025',
+        fillColor: '#ffffff',
+        fillOpacity: 1
+      },
+      label: {
+        text: `${Number(p.speed || 0)} km/h`,
+        fontSize: '10px',
+        fontWeight: '600'
+      },
+      title: `(${p.lat.toFixed(5)}, ${p.lng.toFixed(5)}) • ${Number(p.speed||0)} km/h`
+    });
 
-                        playbackIndex = 0;
-                        isPaused = false;
+    const html = `
+      <div style="min-width:220px">
+        <div><b>Time:</b> ${p.time}</div>
+        <div><b>Lat,Lng:</b> ${p.lat.toFixed(6)}, ${p.lng.toFixed(6)}</div>
+        <div><b>Speed:</b> ${Number(p.speed||0)} km/h</div>
+      </div>`;
+    marker.addListener("click", () => {
+      playbackInfoWnd.setContent(html);
+      playbackInfoWnd.open({ map: historicalTrackingMap, anchor: marker });
+    });
 
-                        const firstPoint = playbackData[0];
-                        historicalTrackingMap.setCenter(firstPoint);
-                        historicalTrackingMap.setZoom(16);
+    playbackMarkers.push(marker);
+    markerLookup.set(k, marker);
+  } else {
+    marker.setMap(showMarkers ? historicalTrackingMap : null);
+  }
+}
 
-                        // Create marker and path
-                        playbackMarker = new google.maps.Marker({
-                            position: firstPoint,
-                            map: historicalTrackingMap,
-                            icon: { url: "http://maps.google.com/mapfiles/ms/icons/yellow-dot.png" }
-                        });
+function goToPoint(lat, lng) {
+  const pos = { lat: Number(lat), lng: Number(lng) };
+  historicalTrackingMap.panTo(pos);
+  historicalTrackingMap.setZoom(18);
+  const mk = markerLookup.get(keyFromLatLng(pos.lat, pos.lng));
+  if (mk) google.maps.event.trigger(mk, "click");
+}
 
-                        playbackPath = new google.maps.Polyline({
-                            path: [],
-                            geodesic: true,
-                            strokeColor: "#FF0000",
-                            strokeOpacity: 1.0,
-                            strokeWeight: 4,
-                            map: historicalTrackingMap
-                        });
+// delegate clicks from table to map
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest(".goto-point");
+  if (!btn) return;
+  goToPoint(btn.dataset.lat, btn.dataset.lng);
+});
 
-                        // Clear table
-                        const table = document.getElementById("historicalPlaybackCombinedTable");
-                        table.innerHTML = "";
+function setMarkersVisible(visible) {
+  playbackMarkers.forEach(m => m.setMap(visible ? historicalTrackingMap : null));
+}
 
-                        // Animate
-                        playbackInterval = setInterval(() => {
-                            if (isPaused || playbackIndex >= playbackData.length) {
-                                clearInterval(playbackInterval);
-                                return;
-                            }
+function toggleMarkers() {
+  showMarkers = !showMarkers;
+  const btn = document.getElementById('toggleMarkersBtn');
+  if (btn) btn.textContent = showMarkers ? 'Hide markers' : 'Show markers';
 
-                            const current = playbackData[playbackIndex];
-                            playbackMarker.setPosition(current);
-                            playbackPath.getPath().push(new google.maps.LatLng(current.lat, current.lng));
-                            historicalTrackingMap.panTo(current);
+  if (showMarkers) {
+  // backfill markers up to the current playbackIndex, but only at the same interval
+const end = Math.max(0, Math.min(playbackIndex, playbackData.length));
+const stride = STEP_SIZE * MARKER_INTERVAL_STEPS; // e.g. 30 * 10
+for (let i = 0; i < end; i += stride) {
+  const p = playbackData[i];
+  if (p) addPlaybackMarker(p);
+}
+    setMarkersVisible(true);
+  } else {
+    setMarkersVisible(false);
+  }
+}
 
-                            // Add table row
-                            table.innerHTML += `
-            <tr>
-                <td>${current.time}</td>
-                <td>${current.lat.toFixed(5)}, ${current.lng.toFixed(5)}</td>
-                <td>${current.speed.toFixed(2)} km/h</td>
-                <td>-</td>
-            </tr>
-        `;
+// (unchanged) CSV export
+function exportPlaybackToExcel() {
+  if (!playbackData.length) {
+    alert("No data to export.");
+    return;
+  }
+  let csv = "Time,Latitude,Longitude,Speed (km/h)\n";
+  playbackData.forEach(entry => {
+    csv += `${entry.time},${entry.lat},${entry.lng},${entry.speed}\n`;
+  });
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'historical_tracking.csv';
+  a.click();
+  window.URL.revokeObjectURL(url);
+}
 
-                            playbackIndex++;
-                        }, speed);
-                    }
+// (kept for future use if you compute idle periods)
+let idleStartTime = null;
+let idleEntries = [];
 
-                    function renderIdleTimeTable() {
-                        const table = document.getElementById("idleTimeTable");
-                        table.innerHTML = "";
+// 🔽 called when the Speed dropdown changes
+function applyPlaybackSpeed() {
+  const sel = document.getElementById("playbackSpeedSelect");
+  playbackSpeed = parseInt(sel.value, 10) || 1000;
 
-                        if (!idleEntries.length) {
-                            table.innerHTML = "<tr><td colspan='3'>No idle periods detected</td></tr>";
-                            return;
-                        }
+  // If currently playing, restart the timer without losing position
+  if (playbackInterval && !isPaused) {
+    clearInterval(playbackInterval);
+    runPlaybackLoop();
+  }
+}
 
-                        idleEntries.forEach(idle => {
-                            const row = `<tr>
-            <td>${idle.start}</td>
-            <td>${idle.end}</td>
-            <td>${idle.duration}</td>
-        </tr>`;
-                            table.innerHTML += row;
-                        });
-                    }
+// ▶️ Start (or resume) playback
+function startPlayback(speedOverride) {
+  if (!playbackData.length) {
+    alert("❌ No data available. Please search first.");
+    return;
+  }
 
-                    function pausePlayback() {
-                        isPaused = true;
-                        console.log("⏸ Playback paused");
-                    }
+    // If we’re already at/after the end, restart from beginning
+  if (playbackIndex >= playbackData.length) playbackIndex = 0;
 
-                    function stopPlayback() {
-                        console.log("⏹ Stopping playback...");
-                        isPaused = false;
-                        playbackIndex = 0;
-                        clearInterval(playbackInterval);
+  // prefer dropdown speed unless overridden
+  playbackSpeed = speedOverride || playbackSpeed;
 
-                        if (playbackMarker) {
-                            playbackMarker.setMap(null);
-                            playbackMarker = null;
-                        }
+  // If starting fresh (no marker/path or at index 0), set up map + UI
+  if (!playbackMarker || !playbackPath || playbackIndex === 0) {
+    if (playbackMarker) playbackMarker.setMap(null);
+    if (playbackPath) playbackPath.setMap(null);
 
-                        if (playbackPath) {
-                            playbackPath.setMap(null);
-                            playbackPath = null;
-                        }
+    clearPlaybackOverlays();
 
-                        playbackData = [];
-                    }
+    const firstPoint = playbackData[0];
+    historicalTrackingMap.setCenter(firstPoint);
+    historicalTrackingMap.setZoom(16);
+
+    playbackMarker = new google.maps.Marker({
+      position: firstPoint,
+      map: historicalTrackingMap,
+      icon: { url: "http://maps.google.com/mapfiles/ms/icons/yellow-dot.png" }
+    });
+
+    playbackPath = new google.maps.Polyline({
+      path: [],
+      geodesic: true,
+      strokeColor: "#FF0000",
+      strokeOpacity: 1.0,
+      strokeWeight: 4,
+      map: historicalTrackingMap
+    });
+
+    // clear table only when starting from beginning
+    if (playbackIndex === 0) {
+      document.getElementById("historicalPlaybackCombinedTable").innerHTML = "";
+    }
+  }
+
+  isPaused = false;
+  clearInterval(playbackInterval);
+  runPlaybackLoop();
+}
+
+// 🔁 Main loop (separate so we can restart on speed change)
+function runPlaybackLoop() {
+  const table = document.getElementById("historicalPlaybackCombinedTable");
+
+  playbackInterval = setInterval(() => {
+    if (isPaused || playbackIndex >= playbackData.length) {
+      clearInterval(playbackInterval);
+      return;
+    }
+
+    const current = playbackData[playbackIndex];
+
+    playbackMarker.setPosition(current);
+    playbackPath.getPath().push(new google.maps.LatLng(current.lat, current.lng));
+    historicalTrackingMap.panTo(current);
+
+// drop a marker only every MARKER_INTERVAL_STEPS steps
+const stepNumber = Math.floor(playbackIndex / STEP_SIZE);
+if (showMarkers && stepNumber % MARKER_INTERVAL_STEPS === 0) {
+  addPlaybackMarker(current);
+}
+
+table.innerHTML += `
+  <tr>
+    <td>${current.time}</td>
+    <td>
+      <button class="goto-point" data-lat="${current.lat}" data-lng="${current.lng}">
+        ${current.lat.toFixed(5)}, ${current.lng.toFixed(5)}
+      </button>
+    </td>
+    <td>${(current.speed ?? 0).toFixed(2)} km/h</td>
+    <td>-</td>
+  </tr>
+`;
+
+  
+    const nextIndex = playbackIndex + STEP_SIZE;
+
+    if (nextIndex >= playbackData.length) {
+      playbackIndex = playbackData.length;
+      clearInterval(playbackInterval);
+      return;
+    } else {
+      playbackIndex = nextIndex;
+    }
+
+  }, playbackSpeed);
+}
+
+// ⏸ Pause
+function pausePlayback() {
+  isPaused = true;
+  clearInterval(playbackInterval);
+}
+
+// ⏹ Stop (reset everything)
+function stopPlayback() {
+  isPaused = false;
+  playbackIndex = 0;
+  clearInterval(playbackInterval);
+
+  if (playbackMarker) { playbackMarker.setMap(null); playbackMarker = null; }
+  if (playbackPath)   { playbackPath.setMap(null);   playbackPath   = null; }
+
+  // clear all small markers/labels too
+  clearPlaybackOverlays();
+
+  // keep playbackData so user can hit Play again (or clear if you want)
+  // playbackData = [];
+
+  // reset dropdown to 1×
+  const sel = document.getElementById("playbackSpeedSelect");
+  if (sel) { sel.value = "1000"; playbackSpeed = 1000; }
+
+  // reset marker toggle
+showMarkers = false;
+const tmb = document.getElementById('toggleMarkersBtn');
+if (tmb) tmb.textContent = 'Show markers';
+setMarkersVisible(false);
+
+}
+
 
                     function exportToPDF() {
                         alert("🚀 PDF Export functionality coming soon!");
                     }
 
-                    function fetchDashboardData() {
-                        const selectedDate = document.getElementById("dateFilter").value;
-                        const dashboardTable = document.getElementById("dashboardTable");
-                        dashboardTable.innerHTML = "";
+function fetchDashboardData() {
+  const { start, end } = getDashRange();
+  const dashboardTable = document.getElementById("dashboardTable");
+  dashboardTable.innerHTML = "";
 
-                        if (!selectedDate) return; // 🛑 Do nothing if date not selected
+  if (!start || !end) return;
 
-                        fetch("/api/received-plates")
-                            .then(response => response.json())
-                            .then(data => {
-                                const filteredData = data.filter(plate => {
-                                    if (!plate.time) return false;
-                                    const plateDate = plate.time.split(" ")[0];
-                                    return plateDate === selectedDate;
-                                });
+  // If your backend supports start/end (it already does in Dispatch Map),
+  // this will fetch only the needed window. If not, we fall back to client-side filter.
+  let url = `/api/received-plates?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`;
 
-                                filteredData.forEach(plate => {
-                                    const plateNumber = plate.plate || "-";
-                                    const status = plate.status || "-";
-                                    const time = plate.time || "-";
-                                    const summons = plate.summons || [];
+  fetch(url)
+    .then(r => r.json())
+    .then(data => {
+      // Fallback guard: if backend ignored the range, filter on client
+      const sDT = new Date(start);
+      const eDT = new Date(end);
 
-                                    const notice = summons.length > 0 ? summons[0].noticeNo : "-";
-                                    const offence = summons.length > 0 ? summons[0].offence : "-";
-                                    const amount = summons.length > 0 ? summons[0].amount : "-";
+      const filteredData = data.filter(plate => {
+        const d = parsePlateTime(plate.time);
+        return d && d >= sDT && d <= eDT;
+      });
 
-                                    let colorClass = "";
-                                    if (status.toLowerCase().includes("scofflaw")) {
-                                        colorClass = "color-scofflaw";
-                                    } else if (status.toLowerCase().includes("not paid")) {
-                                        colorClass = "color-not-paid";
-                                    } else if (status.toLowerCase().includes("paid")) {
-                                        colorClass = "color-paid";
-                                    }
 
-                                    const row = `
-                    <tr>
-                        <td><strong class="${colorClass}">${plateNumber}</strong></td>
-                        <td class="${colorClass}">${status}</td>
-                        <td class="${colorClass}">${time}</td>
-                        <td>${notice}</td>
-                        <td>${offence}</td>
-                        <td>${amount}</td>
-                    </tr>`;
-                                    dashboardTable.innerHTML += row;
-                                });
-                            })
-                            .catch(error => console.error("❌ Error fetching received plates:", error));
+// Render (assumes server already filters hidden; if not, we still show — map will hide)
+filteredData.forEach(plate => {
+  const plateNumber = (plate.plate || "-").toUpperCase();
+  const status = plate.status || "-";
+  const time = plate.time || "-";
+  const summons = Array.isArray(plate.summons) ? plate.summons : [];
+  const noOutstanding = summons.filter(s => {
+    const st = (s.status || "").toLowerCase();
+    const tp = (s.type || "").toLowerCase();
+    return st.includes("scofflaw") || tp.includes("scofflaw");
+  }).length;
+
+  let colorClass = "";
+  const s = status.toLowerCase();
+  if (s.includes("scofflaw")) colorClass = "color-scofflaw";
+  else if (s.includes("not paid")) colorClass = "color-not-paid";
+  else if (s.includes("paid")) colorClass = "color-paid";
+
+const snapshotUrl = (plate.snapshot && plate.snapshot.startsWith('http'))
+  ? plate.snapshot
+  : '/static/default-car.png';
+
+const row = `
+  <tr data-plate="${plateNumber}">
+    <td style="text-align:left;">
+      <button class="tiny-square" title="Show on Dispatch Map"
+              onclick="goToDispatchMap('${plateNumber}')">
+        <span class="ico ico-map"></span>
+      </button>
+      <strong class="${colorClass} plate-text">${plateNumber}</strong>
+    </td>
+    <td class="${colorClass}">${status}</td>
+    <td class="${colorClass}">${time}</td>
+    <td>
+      <img src="${snapshotUrl}" alt="Snapshot"
+           style="width:70px; height:50px; border-radius:6px; object-fit:cover; cursor:pointer;"
+           onclick="openImageModal('${snapshotUrl}', '${plateNumber}', '${status}', '${time}')">
+    </td>
+    <td class="n-outstanding" data-plate="${plateNumber}">...</td>
+    <td class="action-cell" style="white-space:nowrap; display:flex; gap:6px; justify-content:center;">
+      <button class="modern-btn delete-btn">🗑 Delete</button>
+    </td>
+  </tr>`;
+
+  dashboardTable.innerHTML += row;
+});
+
+  fillOutstandingAndPdf();
+      updateSummaryFromData(filteredData);
+      // Also apply plate text filter if user has typed anything
+      filterDashboardTable();
+    })
+    .catch(err => console.error("❌ Error fetching received plates:", err));
+}
+
+// ✅ Global delete: confirm → POST to server → remove row → update summary
+(function attachClientDelete(){
+  const tbody = document.getElementById('dashboardTable');
+  if (!tbody) return;
+
+  tbody.addEventListener('click', async (e) => {
+    const btn = e.target.closest('.delete-btn');
+    if (!btn) return;
+
+    const tr = btn.closest('tr');
+    if (!tr) return;
+
+    const plate = (tr.dataset.plate || '').toUpperCase();
+
+    if (!confirm(`Are you sure you want to delete ${plate || 'this record'}?`)) {
+      return;
+    }
+
+    try {
+      await hidePlateGlobally(plate);  // ← tell server to hide globally
+    } catch (err) {
+      alert('Failed to delete on server. It may still appear for other users.');
+      return;
+    }
+
+    tr.remove();
+    updateSummaryFromTable();
+
+    // Optional: refresh map immediately so markers disappear too
+    if (typeof fetchPlatesAndSummons === 'function') fetchPlatesAndSummons();
+  });
+})();
+
+                    function setSummary({total=0, paid=0, notPaid=0, scofflaw=0}){
+                        document.getElementById("sumTotal").innerText = total;
+                        document.getElementById("sumPaid").innerText = paid;
+                        document.getElementById("sumNotPaid").innerText = notPaid;
+                        document.getElementById("sumScofflaw").innerText = scofflaw;
                     }
 
-                    setInterval(fetchDashboardData, 5000);
-                    window.onload = function () {
-                        initTrackingMap();
-                        setInterval(updateTracking, 5000);
-                        showTrackingTab("live");
-                    };
+                    function updateSummaryFromData(items){
+                        let paid=0, notPaid=0, scofflaw=0;
+                        items.forEach(p=>{
+                            const s = (p.status||"").toLowerCase();
+                            if (s.includes("scofflaw")) scofflaw++;
+                            else if (s.includes("not paid")) notPaid++;
+                            else if (s.includes("paid")) paid++;
+                        });
+                    setSummary({total: items.length, paid, notPaid, scofflaw});
+                    }
+
+                    function updateSummaryFromTable(){
+                        const rows = document.querySelectorAll("#dashboardTable tr");
+                        let paid=0, notPaid=0, scofflaw=0, total=0;
+                        rows.forEach(row=>{
+                            if (row.style.display === "none") return; // count only visible rows
+                            const statusCell = row.querySelector("td:nth-child(2)");
+                            if (!statusCell) return;
+                            total++;
+                            const s = statusCell.textContent.trim().toLowerCase();
+                            if (s.includes("scofflaw")) scofflaw++;
+                            else if (s.includes("not paid")) notPaid++;
+                            else if (s.includes("paid")) paid++;
+                        });
+                        setSummary({total, paid, notPaid, scofflaw});
+                    }
+
+                    // Status pill clicks
+document.querySelectorAll('#statusFilters .btn.pill').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('#statusFilters .btn.pill').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    currentStatus = btn.dataset.status; // all | paid | notpaid | scofflaw
+    filterDashboardTable();             // re-apply filters
+  });
+});
+
+// Also keep live-typing search responsive (you already have this)
+document.getElementById('dashboardSearch')?.addEventListener('input', filterDashboardTable);
+
+                
+window.onload = function () {
+  setDefaultDashRange();
+  fetchDashboardData();
+
+  setDefaultDispatchRange();   // ✅ new
+  initTrackingMap();
+  showTrackingTab("live");
+  setInterval(updateTracking, 5000);
+};
 
                     // 🔄 Dropdown toggle logic
                     function toggleDropdown() {
@@ -1267,6 +2037,19 @@
                     });
 
                 </script>
+
+    <!-- 📷 Image Details Modal (paste this block) -->
+    <div id="imageModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:9999; align-items:center; justify-content:center;">
+      <div style="background:#fff; padding:14px; border-radius:10px; max-width:820px; width:96%; max-height:90vh; overflow:auto;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <h3 id="imageModalTitle" style="margin:0; font-size:18px;">Snapshot</h3>
+          <button onclick="closeImageModal()" class="modern-btn">✖ Close</button>
+        </div>
+        <img id="imageModalImg" src="" alt="Snapshot" style="width:100%; height:auto; border:1px solid #eee; border-radius:8px;">
+        <div id="imageModalMeta" style="margin-top:8px; font-size:14px; color:#444;"></div>
+      </div>
+    </div>
+    <!-- 📷 End Image Details Modal -->
 
 </body>
 
