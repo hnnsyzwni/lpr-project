@@ -1,12 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ms">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login | LPR Dashboard</title>
+    <title>Log Masuk | LPR Dashboard</title>
     <style>
-        /* 🔵 Apply Full-Screen Background */
         body {
             font-family: Arial, sans-serif;
             margin: 0;
@@ -19,7 +18,6 @@
             position: relative;
         }
 
-        /* 🔵 Semi-Transparent Overlay */
         body::before {
             content: "";
             position: absolute;
@@ -28,26 +26,21 @@
             width: 100%;
             height: 100%;
             background: rgba(0, 0, 0, 0.6);
-            /* Dark overlay to blend */
             z-index: 0;
         }
 
-        /* 🔵 Login Box (Centered) */
         .login-container {
             position: relative;
             z-index: 1;
             display: flex;
             width: 800px;
             background: rgba(255, 255, 255, 0.1);
-            /* Semi-transparent */
             backdrop-filter: blur(10px);
-            /* Glass effect */
             border-radius: 15px;
             overflow: hidden;
             box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
         }
 
-        /* 🔵 Left Section */
         .login-left {
             width: 40%;
             background: rgba(0, 0, 0, 0.7);
@@ -64,7 +57,6 @@
             margin-bottom: 10px;
         }
 
-        /* 🔵 Right Section */
         .login-right {
             width: 50%;
             padding: 40px;
@@ -74,6 +66,10 @@
         .login-right h3 {
             text-align: center;
             margin-bottom: 20px;
+        }
+
+        label {
+            font-weight: bold;
         }
 
         input {
@@ -99,7 +95,6 @@
             background: #1994e6;
         }
 
-        /* Transparent Footer */
         .footer {
             position: absolute;
             bottom: 10px;
@@ -107,9 +102,7 @@
             text-align: center;
             padding: 10px;
             background: rgba(0, 0, 0, 0.5);
-            /* Semi-transparent black */
             backdrop-filter: blur(5px);
-            /* Slight blur effect */
             color: white;
             font-size: 14px;
             border-radius: 8px;
@@ -119,27 +112,25 @@
 </head>
 
 <body>
-
-    <!-- 🌟 Login Container -->
     <div class="login-container">
 
-        <!-- 🌟 Left Section (LPR Dashboard) -->
+        <!-- Bahagian Kiri -->
         <div class="login-left">
-            <h2>LPR Dashboard</h2>
-            <p>Effortless License Plate Recognition at Your Fingertips.</p>
+            <h2>Papan Pemuka LPR</h2>
+            <p>Pengecaman Plat Nombor Kenderaan dengan Mudah di Hujung Jari Anda.</p>
         </div>
 
-        <!-- 🌟 Right Section (Form) -->
+        <!-- Bahagian Kanan -->
         <div class="login-right">
-            <h3>LOGIN</h3>
+            <h3>LOG MASUK</h3>
             <form method="POST" action="/login">
-                <label>Username</label>
-                <input type="text" name="username" placeholder="Username" required>
+                <label>Nama Pengguna</label>
+                <input type="text" name="username" placeholder="Masukkan Nama Pengguna" required>
 
-                <label>Password</label>
-                <input type="password" name="password" placeholder="Password" required>
+                <label>Kata Laluan</label>
+                <input type="password" name="password" placeholder="Masukkan Kata Laluan" required>
 
-                <button type="submit">LOGIN</button>
+                <button type="submit">LOG MASUK</button>
             </form>
         </div>
     </div>

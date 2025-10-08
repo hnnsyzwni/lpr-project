@@ -113,7 +113,7 @@ def receive_gps():
     global GPS_LOGS
     data = request.json
     if data:
-        data["plate"] = "VMD9454"
+        data["plate"] = "VP1728"
         data["time"] = data.get("time") or datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         GPS_LOGS.append(data)

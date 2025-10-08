@@ -102,6 +102,14 @@
             overflow-x: auto;
         }
 
+        /* Two-up camera grid */
+        .streams {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+
         .live-video {
             width: 100%;
             height: 500px;
@@ -136,11 +144,66 @@
             background-color: orange;
         }
 
+        /* Keep Perincian button color the same on hover/active/focus */
+        .status-btn {
+            color: #fff;
+            background: var(--status-color, #031d67) !important;
+        }
+
+        .status-btn:hover,
+        .status-btn:active,
+        .status-btn:focus {
+            background: var(--status-color, #031d67) !important;
+            filter: none !important;
+            outline: none;
+        }
+
+        .btn.danger {
+            background: #ef4444;
+        }
+
+        .cell-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: nowrap;
+            /* ⬅️ stop wrapping */
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 10px;
             font-size: 14px;
+        }
+
+        /* compact icon-only delete button (trash) */
+        .icon-btn {
+            background: transparent;
+            border: 0;
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 8px;
+        }
+
+        .icon-btn.danger {
+            color: #dc2626;
+        }
+
+        .icon-btn.danger:hover {
+            background: rgba(220, 38, 38, .08);
+        }
+
+        .icon-btn:disabled {
+            opacity: .5;
+            cursor: not-allowed;
+        }
+
+        .icon-btn svg {
+            width: 22px;
+            height: 22px;
+            display: block;
         }
 
         th,
@@ -158,6 +221,258 @@
         h2 {
             margin-bottom: 10px;
         }
+
+        /* Table sizing: simple layout + consistent row height */
+        :root {
+            --row-h: 78px;
+        }
+
+        /* tweak to 76/80 if you like */
+
+        .right table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .right th,
+        .right td {
+            padding: 10px;
+            text-align: center;
+            border: 1px solid #ccc;
+            vertical-align: middle;
+            /* keep contents centered vertically */
+            word-wrap: break-word;
+        }
+
+        .right th,
+        .right td {
+            box-sizing: border-box;
+        }
+
+        .right tbody tr {
+            height: var(--row-h);
+            /* every row same height */
+        }
+
+        /* Column widths – single source of truth */
+        .right th:nth-child(1),
+        .right td:nth-child(1) {
+            width: 40px;
+        }
+
+        /* # */
+        .right th:nth-child(2),
+        .right td:nth-child(2) {
+            width: 120px;
+        }
+
+        /* License Plate */
+        .right th:nth-child(3),
+        .right td:nth-child(3) {
+            width: 110px;
+        }
+
+        /* Status */
+        .right th:nth-child(4),
+        .right td:nth-child(4) {
+            width: 170px;
+            /* enough for exactly 2 lines */
+        }
+
+        /* prevent the “YYYY-MM-DD HH:MM:SS” from splitting */
+        .nowrap {
+            white-space: nowrap;
+        }
+
+        /* Status cell: allow wrap to two lines, but don't break inside words/date */
+        .right td:nth-child(3) {
+            white-space: normal;
+            line-height: 1.15;
+            overflow-wrap: normal;
+            word-break: keep-all;
+        }
+
+        /* Masa (kolum #4) – benarkan 2 baris */
+        .right th:nth-child(4),
+        .right td:nth-child(4) {
+            width: 130px;
+            /* 120–140 pun ok, 130 elok */
+            white-space: normal;
+            line-height: 1.15;
+        }
+
+        /* Total Summons */
+        .right th:nth-child(6),
+        .right td:nth-child(6) {
+            width: 130px;
+        }
+
+        /* Snapshot */
+        .right th:nth-child(7),
+        .right td:nth-child(7) {
+            width: 145px;
+        }
+
+        /* Action */
+        .right th:nth-child(8),
+        .right td:nth-child(8) {
+            width: 100px;
+        }
+
+        /* Keep plate on one line; allow status to wrap to 2 lines */
+        .right td:nth-child(2) {
+            white-space: nowrap;
+        }
+
+        /* Plate */
+        .right td:nth-child(3) {
+            white-space: normal;
+            line-height: 1.15;
+        }
+
+        /* Snapshot image fits the row height */
+        .thumb {
+            width: 110px;
+            height: 62px;
+            object-fit: cover;
+            display: block;
+            margin: 0 auto;
+        }
+
+        /* Action cell + button height controlled so it doesn't stretch the row */
+        .cell-actions {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: var(--row-h);
+            flex-wrap: nowrap;
+        }
+
+        .cell-actions .btn {
+            display: flex;
+            /* allow multi-line */
+            align-items: center;
+            justify-content: center;
+            height: auto;
+            /* let it grow if text wraps */
+            min-height: 40px;
+            /* still keep consistent height */
+            line-height: 1.2;
+            /* tighter line spacing */
+            padding: 6px 10px;
+            min-width: 100px;
+            /* narrower column */
+            white-space: normal;
+            /* ✅ allow text to wrap */
+            text-align: center;
+            /* center align text */
+            box-sizing: border-box;
+        }
+
+        /* Force table images to align with row height */
+        table td img {
+            max-width: 100px;
+            /* adjust width as needed */
+            max-height: 50px;
+            /* keep height uniform */
+            object-fit: cover;
+            /* crop if needed */
+            display: block;
+            margin: auto;
+        }
+
+
+        /* --- Video UX --- */
+        .video-container {
+            position: relative;
+            width: 100%;
+            height: 500px;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #000;
+            /* black panel by default */
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+        }
+
+        .video-container img {
+            display: none;
+            /* hidden until started */
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .placeholder {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #9aa0a6;
+            font-weight: 600;
+            letter-spacing: .3px;
+            background: linear-gradient(to bottom, rgba(0, 0, 0, .0), rgba(0, 0, 0, .25));
+        }
+
+        .loading-overlay {
+            position: absolute;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, .45);
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .spinner {
+            width: 22px;
+            height: 22px;
+            margin-right: 10px;
+            border: 3px solid rgba(255, 255, 255, .25);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* GPS indicator */
+        .gps {
+            display: flex;
+            align-items: center;
+            margin-top: 12px;
+            font-weight: 600
+        }
+
+        .gps .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+            background: #9aa0a6;
+            box-shadow: 0 0 0 2px rgba(0, 0, 0, .05)
+        }
+
+        .gps.ready .dot {
+            background: #10b981;
+        }
+
+        /* green */
+        .gps.stale .dot {
+            background: #f59e0b;
+        }
+
+        /* amber */
+        .gps.off .dot {
+            background: #ef4444;
+        }
+
+        /* red */
     </style>
 </head>
 
@@ -165,55 +480,80 @@
 
     <header>
         <div class="title">
-            License Plate Recognition Dashboard
-            <span id="connection-status"
-                style="margin-left: 15px; padding: 5px 10px; border-radius: 5px; background-color: red; color: white; font-size: 12px; font-weight: bold;">
-                Offline Mode
-            </span>
+            Papan Pemuka Pengecaman Plat Nombor
         </div>
         <div class="profile">
             <button class="profile-btn">HM</button>
             <div class="dropdown">
-                <a href="#"><span>⚙️</span>&nbsp; Account Settings</a>
-                <a href="/logout"><span>📤</span>&nbsp; Logout</a>
+                <a href="#"><span>⚙️</span>&nbsp; Tetapan Akaun</a>
+                <a href="/logout"><span>📤</span>&nbsp; Log Keluar</a>
             </div>
         </div>
     </header>
 
     <div class="dashboard">
+        <!-- LEFT: live streams + controls + GPS -->
         <div class="left">
-            <h2>Live Stream</h2>
-            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                <div style="flex: 1; text-align: center;">
-                    <div style="font-weight: bold; margin-bottom: 5px;">📷 Left Camera</div>
-                    <img id="leftCamera" src="http://192.168.8.108:5001/video_feed" class="live-video"
-                        alt="Left Camera">
-                </div>
-                <div style="flex: 1; text-align: center;">
-                    <div style="font-weight: bold; margin-bottom: 5px;">📷 Right Camera</div>
-                    <img id="rightCamera" src="http://192.168.8.141:5001/video_feed" class="live-video"
-                        alt="Right Camera">
-                </div>
-            </div>
+            <h2>Siaran Langsung</h2>
+            <div>
+                <div style="font-weight: bold; margin-bottom: 5px;">📷 Kamera</div>
 
-            <div class="controls">
-                <button class="btn start" onclick="startAllServices()">Start All Services</button>
-                <button class="btn stop" onclick="stopAllServices()">Stop All Services</button>
-                <button class="btn reset" onclick="resetSystem()">Reset Queue</button>
+                <!-- Dual streams -->
+                <div class="streams">
+                    <!-- Right camera (CAM0) -->
+                    <div class="panel">
+                        <h3 style="margin:0 0 6px;color:#031d67;font-size:14px">CAM0 — Kanan</h3>
+                        <div class="video-container">
+                            <img id="imgRight" src="" data-src="/video_right" alt="Right Camera Stream">
+                            <div class="placeholder" id="phRight">Tiada siaran — klik <b>Mula</b></div>
+                            <div class="loading-overlay" id="loadRight">
+                                <div class="spinner"></div>Memulakan siaran…
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Left camera (CAM1) -->
+                    <div class="panel">
+                        <h3 style="margin:0 0 6px;color:#031d67;font-size:14px">CAM1 — Kiri</h3>
+                        <div class="video-container">
+                            <img id="imgLeft" src="" data-src="/video_left" alt="Left Camera Stream">
+                            <div class="placeholder" id="phLeft">Tiada siaran — klik <b>Mula</b></div>
+                            <div class="loading-overlay" id="loadLeft">
+                                <div class="spinner"></div>Memulakan siaran…
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="controls">
+                    <button class="btn start" onclick="startAllServices()">Mula</button>
+                    <button class="btn stop" onclick="stopAllServices()">Henti</button>
+                    <button class="btn reset" onclick="resetSystem()">Set</button>
+                </div>
+
+                <!-- GPS -->
+                <div id="gps-indicator" class="gps">
+                    <span class="dot"></span>
+                    <span id="gps-text">GPS: Tidak dikesan</span>
+                </div>
             </div>
         </div>
 
+        <!-- RIGHT: detected plates table -->
         <div class="right">
-            <h2>Detected Plates & Summons Queue (Live)</h2>
+            <h2>Senarai Plat Dikesan & Kompaun</h2>
             <table>
                 <thead>
                     <tr>
                         <th>#</th>
-                        <th>License Plate</th>
+                        <th>Plat Nombor</th>
                         <th>Status</th>
-                        <th>Time</th>
-                        <th>Total Summons</th>
-                        <th>Action</th>
+                        <th>Masa</th>
+                        <th>Jumlah Kompaun</th>
+                        <th>Imej</th>
+                        <th>Tindakan</th>
+                        <th>Hapus</th>
                     </tr>
                 </thead>
                 <tbody id="livestreamTable"></tbody>
@@ -221,130 +561,275 @@
         </div>
     </div>
 
+
     <script>
         const { jsPDF } = window.jspdf;
 
-        function startLiveStream() {
-            document.getElementById("leftCamera").src = "http://192.168.8.108:5001/video_feed";
-            document.getElementById("rightCamera").src = "http://192.168.8.141:5001/video_feed";
+        // Elements for RIGHT panel
+        const imgRight = document.getElementById('imgRight');
+        const phRight = document.getElementById('phRight');
+        const loadRight = document.getElementById('loadRight');
+
+        // Elements for LEFT panel
+        const imgLeft = document.getElementById('imgLeft');
+        const phLeft = document.getElementById('phLeft');
+        const loadLeft = document.getElementById('loadLeft');
+
+        // --- NEW: cache & polling control ---
+        let lastPlates = null;   // keep last non-empty table
+        let pollId = null;       // setInterval handle
+
+        // helper to build a safe snapshot URL if backend doesn't provide one
+        function buildSnapshotURL(p) {
+            if (p.snapshot_url) return p.snapshot_url;
+            const safeTime = (p.time || "").replace(/[^\d]/g, ""); // keep digits only
+            return `/static/snapshots/${encodeURIComponent(p.plate)}_${safeTime}.jpg`;
         }
 
-        function stopLiveStream() {
-            document.getElementById("leftCamera").src = "";
-            document.getElementById("rightCamera").src = "";
+        function twoLineDateTime(s) {
+            if (!s || s === '-' || s === 'N/A') return '-';
+            const parts = String(s).trim().split(/[T ]/);   // supports "YYYY-MM-DD HH:MM:SS" or ISO
+            const date = parts[0] || s;
+            const time = parts[1] || '';
+            return `<span class="nowrap">${date}</span>${time ? `<br><span class="nowrap">${time}</span>` : ''}`;
         }
 
-        function resetSystem() {
-            if (confirm("Reset system?")) {
-                fetch('/reset-queue', { method: 'POST' })
-                    .then(response => response.json())
-                    .then(data => {
-                        alert(data.message);
-                        fetchData(); // Reload updated data
-                    });
+        function renderRows(rows) {
+            const tbody = document.getElementById("livestreamTable");
+            tbody.innerHTML = rows.map((entry, idx) => {
+                const color =
+                    entry.statusCode === "unpaid" ? "red" :
+                        entry.statusCode === "paid" ? "green" :
+                            entry.statusCode === "scofflaw" ? "blue" : "black";
+
+                const hasSummons = Number(entry.totalSummons || 0) > 0 || entry.statusCode === "scofflaw";
+                const summonsCell = hasSummons ? (entry.totalSummons ?? "-") : "-";
+                const actionBtn = hasSummons
+                    ? `<button class="btn neutral status-btn" style="--status-color:${color}" onclick="generatePDF('${entry.plate}')">Perincian</button>`
+                    : "-";
+
+                const snap = entry.snapshot_url ? entry.snapshot_url : buildSnapshotURL(entry);
+                const snapCell = `
+      <a href="${snap}" target="_blank" rel="noopener">
+        <img class="thumb" src="${snap}" alt="snapshot of ${entry.plate}" onerror="this.style.visibility='hidden'">
+      </a>`;
+
+                const delBtn = `
+  <button class="icon-btn danger" title="Hapus"
+          onclick="deletePlate('${entry.id || ''}','${entry.plate}', this)">
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M9 3h6a1 1 0 0 1 1 1v1h4v2H4V5h4V4a1 1 0 0 1 1-1zm1 5h2v10h-2V8zm4 0h2v10h-2V8zM7 8h2v10H7V8z"/>
+    </svg>
+  </button>`;
+
+                return `
+      <tr data-row-id="${entry.id || ''}">
+        <td>${idx + 1}</td>
+        <td style="color:${color}; font-weight:bold;">${entry.plate}</td>
+        <td style="color:${color}; font-weight:bold;">${entry.status}</td>
+        <td style="color:${color}; font-weight:bold;">${twoLineDateTime(entry.time)}</td>
+        <td>${summonsCell}</td>
+        <td>${snapCell}</td>
+        <td class="cell-actions">${actionBtn}</td>
+        <td>${delBtn}</td>
+      </tr>`;
+            }).join("");
+        }
+
+        function startPolling() { if (!pollId) pollId = setInterval(fetchData, 5000); }
+        function stopPolling() { if (pollId) { clearInterval(pollId); pollId = null; } }
+
+        // Generic UI helpers
+        function showPlaceholder(elImg, elPh, elLoad, text) {
+            elImg.style.display = 'none';
+            elPh.style.display = 'flex';
+            elPh.innerHTML = text || 'Tiada siaran — klik <b>Mula</b>';
+            elLoad.style.display = 'none';
+        }
+        function showLoading(elPh, elLoad) {
+            elPh.style.display = 'none';
+            elLoad.style.display = 'flex';
+        }
+        function showStream(elImg, elPh, elLoad) {
+            elLoad.style.display = 'none';
+            elPh.style.display = 'none';
+            elImg.style.display = 'block';
+        }
+
+        // Start/stop for a given <img>
+        function startStreamFor(imgEl, phEl, loadEl) {
+            showLoading(phEl, loadEl);
+            const url = (imgEl.dataset.src || '') + '?t=' + Date.now(); // cache-buster
+            imgEl.onload = () => showStream(imgEl, phEl, loadEl);
+            imgEl.onerror = () => showPlaceholder(imgEl, phEl, loadEl, 'Siaran tidak tersedia. Semak kamera/perkhidmatan, kemudian klik <b>Mula</b> semula.');
+            imgEl.src = url;
+        }
+        function stopStreamFor(imgEl, phEl, loadEl) {
+            imgEl.src = '';
+            showPlaceholder(imgEl, phEl, loadEl, 'Dihentikan — klik <b>Mula</b> untuk sambung.');
+        }
+
+        // Start/stop both streams
+        function startLiveStreams() {
+            startStreamFor(imgRight, phRight, loadRight);
+            startStreamFor(imgLeft, phLeft, loadLeft);
+        }
+        function stopLiveStreams() {
+            stopStreamFor(imgRight, phRight, loadRight);
+            stopStreamFor(imgLeft, phLeft, loadLeft);
+        }
+
+        // Initial placeholders on page load
+        showPlaceholder(imgRight, phRight, loadRight, 'Tiada siaran — klik <b>Mula</b>');
+        showPlaceholder(imgLeft, phLeft, loadLeft, 'Tiada siaran — klik <b>Mula</b>');
+
+        function setButtonsDisabled(disabled) {
+            document.querySelectorAll('.controls .btn').forEach(b => b.disabled = disabled);
+        }
+
+        async function resetSystem() {
+            if (!confirm("Tetap semula sistem?")) return;
+
+            try {
+                setButtonsDisabled(true);
+
+                // Tell both devices to clear queues (local + remote).
+                await Promise.all([
+                    fetch('/reset-queue', { method: 'POST' }),
+                    fetch('http://192.168.8.102:5001/reset-queue', { method: 'POST' }) // <- remove if you don't have Pi1
+                ]).then(rs => Promise.all(rs.map(r => r.json())));
+
+                // Immediately clear UI + cache so plates "hilang" right away
+                lastPlates = null;
+                renderRows([]);
+
+                // Optionally pull again (will stay empty until new detections arrive)
+                await fetchData();
+
+                alert("✅ Plat dibersihkan.");
+            } catch (err) {
+                console.error("❌ Reset failed:", err);
+                alert("Tetap semula gagal. Rujuk konsol untuk butiran.");
+            } finally {
+                setButtonsDisabled(false);
             }
         }
+
         function startAllServices() {
             Promise.all([
-                // Start Pi2 local services
                 fetch('/start-all', { method: 'POST' }),
-                // Start Pi1 services (remote)
-                fetch('http://192.168.8.141:5001/start-all', { method: 'POST' })
+                fetch('http://192.168.8.102:5001/start-all', { method: 'POST' })
             ])
-                .then(async responses => {
-                    const results = await Promise.all(responses.map(res => res.json()));
-                    alert(`✅ Pi2: ${results[0].message}\n✅ Pi1: ${results[1].message}`);
+                .then(async (responses) => {
+                    // proceed even if there’s no JSON body
+                    const ok = responses.every(r => r.ok);
+                    if (!ok) console.warn('Start endpoints responded but not OK.');
+                    startLiveStreams();       // kick off both image streams
+                    refreshGPS();
+                    await fetchData();
+                    startPolling();
+                    alert("✅ Dimulakan.");
                 })
-                .catch(error => {
-                    console.error("❌ Error starting services:", error);
-                });
+                .catch(err => console.error("❌ Error starting services:", err));
         }
 
         function stopAllServices() {
             Promise.all([
-                // Stop Pi2 local services
                 fetch('/stop-all', { method: 'POST' }),
-                // Stop Pi1 services (remote)
-                fetch('http://192.168.8.141:5001/stop-all', { method: 'POST' })
+                fetch('http://192.168.8.102:5001/stop-all', { method: 'POST' })
             ])
-                .then(async responses => {
-                    const results = await Promise.all(responses.map(res => res.json()));
-                    alert(`🛑 Pi2: ${results[0].message}\n🛑 Pi1: ${results[1].message}`);
+                .then((responses) => {
+                    const ok = responses.every(r => r.ok);
+                    if (!ok) console.warn('Stop endpoints responded but not OK.');
+                    stopLiveStreams();
+                    stopPolling();
+                    document.getElementById('gps-indicator').className = 'gps off';
+                    document.getElementById('gps-text').textContent = 'GPS: Tidak dikesan';
+                    alert("🛑 Dihentikan.");
                 })
-                .catch(error => {
-                    console.error("❌ Error stopping services:", error);
-                });
+                .catch(err => console.error("❌ Error stopping services:", err));
         }
 
-        function fetchData() {
-            const today = new Date().toISOString().split("T")[0];
 
-            Promise.all([
-                fetch(`/api/received-plates?start=${today}&end=${today}`).then(res => res.json()),
-                fetch("/summons").then(res => res.json())
-            ])
-                .then(([allPlates, summonsData]) => {
-                    let livestreamTable = document.getElementById("livestreamTable");
-                    livestreamTable.innerHTML = "";
+        function formatDateLikeBackend(s) {
+            if (!s) return null;
+            try {
+                let d;
+                if (typeof s === "number") d = new Date(s);
+                else if (/^\d{4}-\d{2}-\d{2}(T|\s)\d{2}:\d{2}(:\d{2})?/.test(s)) d = new Date(s.replace(' ', 'T'));
+                else d = new Date(s);
+                if (isNaN(d.getTime())) return null;
 
-                    let allPlatesWithFlags = [];
+                const pad = n => String(n).padStart(2, '0');
+                const yyyy = d.getFullYear();
+                const mm = pad(d.getMonth() + 1);
+                const dd = pad(d.getDate());
+                const HH = pad(d.getHours());
+                const MM = pad(d.getMinutes());
+                const SS = pad(d.getSeconds());
+                return `${yyyy}-${mm}-${dd} ${HH}:${MM}:${SS}`;
+            } catch { return null; }
+        }
 
-                    allPlates.forEach(plate => {
-                        allPlatesWithFlags.push({
-                            plate: plate.plate,
-                            status: plate.status,
-                            time: plate.time,
-                            isScofflaw: false,
-                            summonsNo: ""
-                        });
-                    });
 
-                    let scofflawQueue = 1;
-                    summonsData.forEach(summon => {
-                        let existing = allPlatesWithFlags.find(p => p.plate === summon.plate);
-                        if (existing) {
-                            existing.status = "Scofflaw";
-                            existing.isScofflaw = true;
-                            existing.summonsNo = `${scofflawQueue++}`;
-                        } else {
-                            allPlatesWithFlags.push({
-                                plate: summon.plate,
-                                status: "Scofflaw",
-                                time: "N/A",
-                                isScofflaw: true,
-                                summonsNo: `${scofflawQueue++}`
-                            });
-                        }
-                    });
+        async function fetchData() {
+            try {
+                const plates = await fetch('/plates').then(r => r.json());
 
-                    allPlatesWithFlags.forEach((entry, index) => {
-                        let statusColor = entry.status.includes("Not Paid") ? "red" :
-                            entry.status.includes("Paid") ? "green" : "blue";
+                const rows = (plates || []).map(p => {
+                    const totalSummons =
+                        p.total_summons ?? (Array.isArray(p.summons) ? p.summons.length : 0);
 
-                        let summonsColumn = entry.isScofflaw ? entry.summonsNo : "-";
+                    const raw = (p.status || "Not Paid").toLowerCase();
+                    const isScofflaw = (totalSummons > 0) || raw.includes("scofflaw");
 
-                        let actionButton = entry.isScofflaw
-                            ? `<button onclick="generatePDF('${entry.plate}')" 
-                    style="background: blue; color: white; border: none; padding: 5px; cursor: pointer;">
-                    Download PDF
-                  </button>`
-                            : "-";
+                    // baca tarikh sah/hingga (jika backend hantar)
+                    const paidUntilRaw = p.paid_until || p.valid_until || p.expiry || p.expiry_date || p.paid_until_date;
+                    const paidUntilFmt = formatDateLikeBackend(paidUntilRaw);
+                    const paidUntilTs = paidUntilFmt ? new Date(paidUntilFmt.replace(' ', 'T')).getTime() : null;
+                    const nowTs = Date.now();
 
-                        let rowHTML = `
-                <tr>
-                    <td>${index + 1}</td>
-                    <td style="color:${statusColor}; font-weight:bold;">${entry.plate}</td>
-                    <td style="color:${statusColor}; font-weight:bold;">${entry.status}</td>
-                    <td style="color:${statusColor}; font-weight:bold;">${entry.time}</td>
-                    <td>${summonsColumn}</td>
-                    <td>${actionButton}</td>
-                </tr>`;
-                        livestreamTable.innerHTML += rowHTML;
-                    });
-                })
-                .catch(error => {
-                    console.error("❌ Error fetching plates:", error);
+                    let statusCode, statusLabel;
+                    if (isScofflaw) {
+                        statusCode = "scofflaw";
+                        statusLabel = "Kompaun Tertunggak";
+                    } else if (paidUntilTs != null && paidUntilTs >= nowTs) {
+                        // ✅ Tunjuk "Berbayar sehingga ..." bila ada paid_until & masih sah
+                        statusCode = "paid";
+                        statusLabel = `Berbayar sehingga<br><span class="nowrap">${paidUntilFmt}</span>`;
+                    } else if (raw.includes("paid") && !raw.includes("not")) {
+                        // fallback jika backend lama hanya hantar teks 'paid'
+                        statusCode = "paid";
+                        statusLabel = "Berbayar";
+                    } else {
+                        statusCode = "unpaid";
+                        statusLabel = "Tidak Berbayar";
+                    }
+
+                    return {
+                        id: p.id,
+                        plate: p.plate,
+                        status: statusLabel,
+                        statusCode,
+                        time: p.time || "N/A",
+                        totalSummons,
+                        snapshot_url: p.snapshot_url || null
+                    };
                 });
+
+                rows.sort((a, b) => {
+                    const aS = a.statusCode === "scofflaw";
+                    const bS = b.statusCode === "scofflaw";
+                    if (aS !== bS) return bS - aS;
+                    return (b.time || '').localeCompare(a.time || '');
+                });
+
+                if (rows.length) lastPlates = rows;
+                renderRows(rows.length ? rows : (lastPlates || []));
+            } catch (e) {
+                console.error("❌ Ralat mendapatkan data plat:", e);
+                if (lastPlates) renderRows(lastPlates);
+            }
         }
 
         window.generatePDF = function (plateNumber) {
@@ -386,12 +871,12 @@
                     }
 
                     // ✅ Adjusted Logo to Slim and Centered (width 20, height 40)
-                    const logoWidth = 20;
+                    const logoWidth = 30;
                     const logoHeight = 40;
                     const pageWidth = doc.internal.pageSize.getWidth();
                     const centerX = (pageWidth - logoWidth) / 2;
 
-                    const logoURL = "/static/mbklogo.png";
+                    const logoURL = "/static/mbpp.png";
                     doc.addImage(logoURL, "PNG", centerX, 10, logoWidth, logoHeight);
 
                     // ✅ Add Title Below Logo
@@ -400,7 +885,7 @@
                     doc.text("NOTIS TERTUNGGAK", pageWidth / 2, 55, { align: "center" });
                     doc.text("KESALAHAN DI BAWAH AKTA PENGANGKUTAN JALAN 1987 PERINTAH", pageWidth / 2, 63, { align: "center" });
                     doc.text("PENGANGKUTAN JALAN (PERUNTUKAN TEMPAT LETAK KERETA)(MAJLIS", pageWidth / 2, 71, { align: "center" });
-                    doc.text("PERBANDARAN KUANTAN) 2005", pageWidth / 2, 79, { align: "center" });
+                    doc.text("BANDARAYA PULAU PINANG) 2005", pageWidth / 2, 79, { align: "center" });
 
                     // ✅ Document Metadata (Aligned Properly)
                     let startY = 90;
@@ -483,7 +968,7 @@
                     // ✅ Generate QR Code for Summons Page
                     console.log("🔄 Generating QR Code...");
 
-                    const qrCodeURL = `http://192.168.8.108:5001/summons-payment?plate=${plateNumber}`;
+                    const qrCodeURL = `http://192.168.8.102:5001/summons-payment?plate=${plateNumber}`;
 
                     try {
                         let tempDiv = document.createElement("div"); // Temporary div for QR code generation
@@ -520,22 +1005,59 @@
                 .catch(error => console.error("❌ Error fetching summons data:", error));
         };
 
+        async function deletePlate(id, plate, btn) {
+            if (!confirm(`Delete ${plate}?`)) return;
+
+            const row = btn.closest('tr');
+            btn.disabled = true;
+
+            // Pause polling to avoid the row being re-added mid-delete
+            stopPolling();
+
+            // Optimistic UI: remove immediately
+            if (row) row.remove();
+
+            try {
+                const res = await fetch('/api/delete-plate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id, plate })
+                });
+                const data = await res.json();
+
+                if (!res.ok || data.status !== 'success') {
+                    throw new Error(data.message || 'Delete failed');
+                }
+
+                // Also remove from our cached fallback so it won’t “come back”
+                if (lastPlates) {
+                    lastPlates = lastPlates.filter(p => (p.id ?? p.plate) !== (id ?? plate));
+                }
+            } catch (e) {
+                alert('Delete failed: ' + e.message);
+            } finally {
+                await fetchData();  // sync table with DB
+                startPolling();     // resume
+            }
+        }
+        window.deletePlate = deletePlate;
+
         function updateConnectionStatus() {
             fetch('/api/status')
                 .then(response => response.json())
                 .then(data => {
                     const label = document.getElementById("connection-status");
                     if (data.status === "online") {
-                        label.innerText = "Online";
+                        label.innerText = "Atas Talian";
                         label.style.backgroundColor = "green";
                     } else {
-                        label.innerText = "Offline Mode";
+                        label.innerText = "Luar Talian";
                         label.style.backgroundColor = "red";
                     }
                 })
                 .catch(() => {
                     const label = document.getElementById("connection-status");
-                    label.innerText = "Offline Mode";
+                    label.innerText = "Luar Talian";
                     label.style.backgroundColor = "red";
                 });
         }
@@ -545,7 +1067,38 @@
         setInterval(updateConnectionStatus, 10000);
 
         fetchData();
-        setInterval(fetchData, 5000);
+        startPolling();   // use controlled polling
+
+        async function refreshGPS() {
+            const wrap = document.getElementById('gps-indicator');
+            const txt = document.getElementById('gps-text');
+            try {
+                // Quick status (freshness)
+                const s = await fetch('/api/gps-status').then(r => r.json());
+                if (s.detected) {
+                    // Get latest coordinates
+                    const g = await fetch('/api/gps-latest').then(r => r.json());
+                    const fresh = (s.age_seconds == null) || (s.age_seconds <= 30);
+                    wrap.className = 'gps ' + (fresh ? 'ready' : 'stale');
+                    if (g && g.detected && g.latitude != null && g.longitude != null) {
+                        txt.textContent = `GPS: ${Number(g.latitude).toFixed(6)}, ${Number(g.longitude).toFixed(6)}`;
+                    } else {
+                        txt.textContent = 'GPS: Dikesan';
+                    }
+                } else {
+                    wrap.className = 'gps off';
+                    txt.textContent = 'GPS: Tidak dikesan';
+                }
+            } catch (e) {
+                wrap.className = 'gps stale';
+                txt.textContent = 'GPS: Ralat';
+            }
+        }
+
+        // run once + every 10s
+        refreshGPS();
+        setInterval(refreshGPS, 10000);
+
     </script>
 </body>
 
