@@ -129,18 +129,57 @@ if not os.path.exists(app.config["SNAPSHOT_FOLDER"]):
 
 # API Details
 PLATE_RECOGNIZER_API_URL = "https://api.platerecognizer.com/v1/plate-reader/"
-PARKING_API_URL = "https://mycouncil.citycarpark.my/parking/ctcp/services-listerner_mbk.php"
 NODE_API_URL = "http://localhost:5000/api/summons"
 API_TOKEN = "7a5650fef8c594f93549eb9dea557d1bcbf1b42e"
-PARKING_API_ACTION = "GetParkingRightByPlateVerify"
+AZURE_DASHBOARD_BASE = "http://52.163.74.67:5002"   # <-- Azure dashboard (Flask)
+AZURE_UPLOAD_URL = f"{AZURE_DASHBOARD_BASE}/api/upload-snapshot"
+VERIFY_VEHICLE_API_URL = "https://traffic-management.vista-summerose.com/api/traffic-management/verify-vehicle"
+
+VERIFY_API_TIMEOUT = 8
+TM_BEARER_TOKEN = "33d2ba76cffaf6d0d9b5b610f593742f"   # token dari Postman tu
+
+VERIFY_HEADERS = {
+    "Content-Type": "application/json",
+    "Authorization": f"Bearer {TM_BEARER_TOKEN}",
+}
  
 detected_plates = []
 summons_data = []  # Store fetched summons data globally
 lock = threading.Lock()
 frame_queue0 = Queue(maxsize=1)
 frame_queue1 = Queue(maxsize=1) # Increased queue size
+camera_enabled = {
+    "cam0": False,
+    "cam1": False
+}
+
+camera_state_lock = threading.Lock()
 gps_logs = []  # ✅ Store latest GPS readings
 stored_officer_id = "Unknown"  # ✅ Store officer ID globally
+stored_parking_rights_zone = "UNKNOWN"
+stored_parking_area = "UNKNOWN"
+
+# =========================
+# DEVICE / CAMERA ID
+# =========================
+CLIENT_DEVICE = "LPR-PI-01"  # tukar ikut nama device/client yang awak nak
+
+CAMERA_INFO = {
+    "cam0": {
+        "camera_side": "LEFT",
+        "camera_direction": "LEFT"
+    },
+    "cam1": {
+        "camera_side": "RIGHT",
+        "camera_direction": "RIGHT"
+    }
+}
+
+def get_camera_info(label):
+    return CAMERA_INFO.get(label, {
+        "camera_side": "UNKNOWN",
+        "camera_direction": "UNKNOWN"
+    })
 
 latest_gps = {"latitude": None, "longitude": None, "last_update": None}  # ✅ Global GPS storage
 
@@ -150,6 +189,62 @@ WRITE_NULL_GPS_AS_ZERO = False # ✅ Jika True, simpan 0.0/0.0 bila GPS tiada; k
 DUP_COOLDOWN_S = 10
 # -----------------------
 
+# =========================
+# DEMO / FAKE MODE
+# =========================
+DEMO_MODE = False  # tukar False bila production
+
+# ✅ Demo plates whitelist + fallback SEQUENCE (unknown -> PUTRAJAYA1234 -> PATRIOT1234 -> ...)
+DEMO_ALLOWED_PLATES = {
+    "VMD9454", "ABC1234", "PMX6620", "BPH1200", "KFH1201",
+    "WTM1203", "TES1234", "BPS1204", "DCL1202"
+}
+
+DEMO_FALLBACK_SEQUENCE = ["PUTRAJAYA123", "PATRIOT1234"]
+_demo_fallback_idx = 0
+_demo_fallback_lock = threading.Lock()
+
+def get_next_demo_fallback_plate():
+    global _demo_fallback_idx
+    with _demo_fallback_lock:
+        if _demo_fallback_idx < len(DEMO_FALLBACK_SEQUENCE):
+            p = DEMO_FALLBACK_SEQUENCE[_demo_fallback_idx]
+            _demo_fallback_idx += 1
+            return p
+        # ✅ dah habis 2 fallback -> stop override
+        return None
+
+DEMO_SUMMONS_PLATES = {
+    "ABC1234": [
+        {
+            "noticeNo": "MBP-TEST-0001",
+            "offence": "Parking without valid payment",
+            "location": "Bentong Town",
+            "date": "2025-12-30",
+            "status": "UNPAID",
+            "amount": 50,
+            "due_date": "2026-01-15"
+        },
+        {
+            "noticeNo": "MBP-TEST-0002",
+            "offence": "Expired parking ticket",
+            "location": "Bentong Town",
+            "date": "2025-12-29",
+            "status": "UNPAID",
+            "amount": 100,
+            "due_date": "2026-01-10"
+        }
+    ]
+}
+
+# ✅ Fake Paid plates (skip VERIFY API)
+DEMO_PAID_PLATES = {
+    "PMX6620":  "Paid until 2026-01-05 23:59:59",
+    "KFH1201":  "Paid until 2025-12-31 23:59:59",
+    "WTM1203":  "Paid until 2026-01-02 13:05:59",
+    "BPS1204":  "Paid until 2026-01-06 15:59:59",
+    "PATRIOT1234":  "Paid until 2026-01-08 11:30:59",
+}
 
 # API Logging Stats
 api_stats = {
@@ -181,6 +276,22 @@ def crop_plate_region(frame):
     return frame[int(h * 0.1):int(h * 0.99), int(w * 0.01):int(w * 0.99)]
 
 recent_plates = {}
+
+# ✅ Detect once-until-reset (no duplicates until reset)
+seen_plates = set()          # plates already detected this session
+seen_lock = threading.Lock()
+
+def should_skip_plate_once_until_reset(plate: str) -> bool:
+    """Return True if plate already detected (until reset)."""
+    p = (plate or "").strip().upper()
+    if not p:
+        return True
+
+    with seen_lock:
+        if p in seen_plates:
+            return True
+        seen_plates.add(p)
+        return False
 
 def is_duplicate_plate(plate, cooldown=10):
     now = time.time()
@@ -260,7 +371,7 @@ def send_gps_to_dashboard(data):
 # Authentication Routes
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    global stored_officer_id
+    global stored_officer_id, stored_parking_rights_zone, stored_parking_area
 
     if request.method == "POST":
         username = request.form["username"]
@@ -282,8 +393,16 @@ def login():
         if user and password == user["password"]:
             session["user_id"] = user["id"]
             session["username"] = user["username"]
-            session["officer_id"] = user["officer_id"]
-            stored_officer_id = user["officer_id"]  # Store globally for detection
+            session["officer_id"] = user.get("officer_id") or "Unknown"
+
+            # Default until officer selects kawasan/zone from dashboard
+            session["parking_rights_zone"] = "UNKNOWN"
+            session["parking_area"] = "UNKNOWN"
+
+            stored_officer_id = session["officer_id"]
+            stored_parking_rights_zone = session["parking_rights_zone"]
+            stored_parking_area = session["parking_area"]
+
             return redirect(url_for("dashboard"))
         else:
             return render_template("login.html", error="Invalid login credentials.")
@@ -292,9 +411,14 @@ def login():
 
 @app.route("/logout")
 def logout():
-    global stored_officer_id
+    global stored_officer_id, stored_parking_rights_zone, stored_parking_area
+
     session.clear()
+
     stored_officer_id = "Unknown"
+    stored_parking_rights_zone = "UNKNOWN"
+    stored_parking_area = "UNKNOWN"
+
     return redirect(url_for("login"))
 
 @app.route("/")
@@ -307,59 +431,83 @@ def dashboard():
 def recognize_plate(frame):
     throttler.wait()
     try:
-        start_time = time.time()
         roi = crop_plate_region(frame)
-        _, img_encoded = cv2.imencode(".jpg", roi, [int(cv2.IMWRITE_JPEG_QUALITY), 25])
-        img_bytes = img_encoded.tobytes()
 
-        print("📤 Sending image to Plate Recognizer API...")
+        # better JPEG
+        _, img_encoded = cv2.imencode(".jpg", roi, [int(cv2.IMWRITE_JPEG_QUALITY), 90])
+        img_bytes = img_encoded.tobytes()
 
         response = requests.post(
             PLATE_RECOGNIZER_API_URL,
             files={"upload": ("image.jpg", img_bytes, "image/jpeg")},
+            data={"regions": "my"},
             headers={"Authorization": f"Token {API_TOKEN}"},
             timeout=30
         )
 
-        elapsed = time.time() - start_time
-        api_stats["total_time"] += elapsed
-
         if response.status_code == 201:
-            api_stats["success_count"] += 1
-            print(f"✅ Plate Recognizer Success in {elapsed:.2f}s | Total Success: {api_stats['success_count']}")
             return response.json().get("results", [])
         else:
-            api_stats["failure_count"] += 1
-            print(f"❌ API Error {response.status_code} in {elapsed:.2f}s | Total Failures: {api_stats['failure_count']}")
+            print("PR error:", response.status_code, response.text)
             return []
-
-    except requests.exceptions.RequestException as e:
-        api_stats["failure_count"] += 1
-        print(f"❌ Request Exception: {e} | Total Failures: {api_stats['failure_count']}")
+    except Exception as e:
+        print("PR exception:", e)
         return []
 
 def check_parking_status(plate_number):
+    plate = (plate_number or "").strip().upper()
+
+    # ✅ Demo override: force "Paid until ..."
+    if DEMO_MODE and plate in DEMO_PAID_PLATES:
+        return DEMO_PAID_PLATES[plate]
+
+    payload = {"plate_number": plate}
+
     try:
-        response = requests.get(
-            PARKING_API_URL,
-            params={"prpid": "", "action": PARKING_API_ACTION, "filterid": plate_number},
-            verify=False, timeout=5
+        r = requests.post(
+            VERIFY_VEHICLE_API_URL,
+            json=payload,
+            headers=VERIFY_HEADERS,
+            timeout=VERIFY_API_TIMEOUT
         )
-        if response.status_code == 200:
-            result = response.json()
-            if isinstance(result, list) and result:
-                return f"Paid until {result[0].get('enddate', 'Unknown')} {result[0].get('endtime', '')}"
+
+        print("VERIFY status:", r.status_code)
+        print("VERIFY body:", r.text[:300])
+
+        if r.status_code != 200:
+            return "Error"
+
+        js = r.json()
+        if not js.get("success"):
             return "Not Paid"
-        return "Error"
-    except requests.exceptions.RequestException as e:
-        print(f"Parking API failed: {e}")
+
+        data = js.get("data") or []
+        if not isinstance(data, list) or not data:
+            return "Not Paid"
+
+        rec = data[0] or {}
+        end_date = (rec.get("end_date") or "").strip()
+        end_time = (rec.get("end_time") or "").strip()
+
+        d = datetime.strptime(end_date, "%d-%m-%Y").strftime("%Y-%m-%d")
+        t = datetime.strptime(end_time, "%I:%M:%S %p").strftime("%H:%M:%S") if end_time else "23:59:59"
+        return f"Paid until {d} {t}"
+
+    except Exception as e:
+        print("❌ Verify Vehicle exception:", e)
         return "Error"
 
 def check_summons_status(plate_number):
+    plate = (plate_number or "").strip().upper()
+
+    # ✅ Demo override
+    if DEMO_MODE and plate in DEMO_SUMMONS_PLATES:
+        return DEMO_SUMMONS_PLATES[plate]
+
     try:
         response = requests.post(
             NODE_API_URL,
-            json={"vehicleNumber": plate_number},
+            json={"vehicleNumber": plate},
             headers={"Content-Type": "application/json"},
             timeout=5
         )
@@ -373,157 +521,38 @@ def check_summons_status(plate_number):
         print(f"Summons API failed: {e}")
         return []
 
-# Frame processing
-
-# ✅ Insert this updated section inside your `process_frames()` function
-
-def process_frames():
+def upload_snapshot_to_azure(local_path: str, filename: str) -> str | None:
     """
-    Process frames -> Plate Recognizer -> save & forward.
-    - Skips recent duplicates via is_duplicate_plate(...)
-    - Allows detection even if GPS is missing (flags control NULL vs 0.0)
+    Upload gambar snapshot ke Azure dashboard.
+    Return path yang Azure boleh serve, contoh: /static/snapshots/ABC.jpg
     """
-    global stored_officer_id
-    while True:
-        if frame_queue.empty():
-            time.sleep(0.01)
-            continue
+    if not local_path or not os.path.exists(local_path):
+        return None
 
-        frame = frame_queue.get()
-        try:
-            plates = recognize_plate(frame)
-        except Exception as e:
-            print(f"❌ recognize_plate error: {e}")
-            plates = []
+    if not is_connected():
+        save_offline({"type": "snapshot", "data": {"local_path": local_path, "filename": filename}})
+        return None
 
-        for plate_data in plates:
-            plate_number = (plate_data.get("plate") or "").upper().strip()
-            if not plate_number:
-                print("⚠️ No plate detected, skipping...")
-                continue
+    try:
+        with open(local_path, "rb") as f:
+            files = {"file": (filename, f, "image/jpeg")}
+            r = requests.post(AZURE_UPLOAD_URL, files=files, timeout=10)
 
-            # ✅ Skip duplicates within cooldown
-            if is_duplicate_plate(plate_number, cooldown=10):  # change 10 to your desired seconds
-                print(f"⚠️ Recently detected {plate_number}, skipping duplicate.")
-                continue
+        if r.status_code != 200:
+            print("❌ Azure upload failed:", r.status_code, r.text)
+            return None
 
-            # --- Snapshot ---
-            timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
-            snapshot_name = f"{plate_number}_{int(time.time())}.jpg"
-            snapshot_path = os.path.join(app.config["SNAPSHOT_FOLDER"], snapshot_name)
-            try:
-                cv2.imwrite(snapshot_path, frame)
-            except Exception as e:
-                print(f"❌ Failed to save snapshot: {e}")
-                snapshot_path = None
+        js = r.json()
+        # dashboard.py returns {"ok": True, "path": "/static/snapshots/xxx.jpg"}
+        if js.get("ok") and js.get("path"):
+            return js["path"]
 
-            # --- GPS (allow missing) ---
-            cur_lat = latest_gps.get("latitude")
-            cur_lon = latest_gps.get("longitude")
-            if (cur_lat is None or cur_lon is None) and ALLOW_NO_GPS:
-                if WRITE_NULL_GPS_AS_ZERO:
-                    lat_to_write = 0.0
-                    lon_to_write = 0.0
-                else:
-                    lat_to_write = None
-                    lon_to_write = None
-            else:
-                lat_to_write = cur_lat
-                lon_to_write = cur_lon
+        print("❌ Azure upload bad response:", js)
+        return None
 
-            officer_id = stored_officer_id
-
-            # --- Parking & Summons ---
-            try:
-                parking_status = check_parking_status(plate_number)
-            except Exception as e:
-                print(f"Parking status error: {e}")
-                parking_status = "Error"
-
-            try:
-                summons_status = check_summons_status(plate_number)
-            except Exception as e:
-                print(f"Summons status error: {e}")
-                summons_status = []
-
-            # --- Final status logic ---
-            if summons_status and isinstance(summons_status, list) and len(summons_status) > 0:
-                final_status = summons_status[0].get("status", "Not Paid")
-            elif isinstance(parking_status, str) and "Paid until" in parking_status:
-                final_status = parking_status
-            else:
-                final_status = "Not Paid"
-
-            # ✅ extract normalized paid-until timestamp if present
-            paid_until_val = extract_paid_until_from_status(final_status)
-
-            
-
-            snapshot_url = (
-                f"http://{request.host}/{snapshot_path}"
-                if snapshot_path and request
-                else f"http://192.168.8.102:5001/static/snapshots/{snapshot_name}"
-            )
-
-            plate_info = {
-                "plate": plate_number,
-                "status": final_status,
-                "summons": summons_status if isinstance(summons_status, list) else [],
-                "time": timestamp,
-                "snapshot": snapshot_url,
-                "latitude": lat_to_write,
-                "longitude": lon_to_write,
-                "officer_id": officer_id,
-                "paid_until": paid_until_val,  # ✅ new
-            }
-
-            with lock:
-                detected_plates.append(plate_info)
-                send_plate_to_dashboard(plate_info)
-
-            print(f"✅ Added Detected Plate: {plate_info}")
-
-            # --- Save to DB ---
-            try:
-                db = get_db()
-                with db.cursor() as cursor:
-                    summons_total = len(plate_info["summons"])
-                    cursor.execute("""
-                        INSERT INTO detected_plates
-                            (plate, timestamp, image_path, latitude, longitude, officer_id, status, summons_total, summons_json)
-                        VALUES
-                            (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                    """, (
-                        plate_number,
-                        timestamp,
-                        snapshot_path,
-                        lat_to_write,
-                        lon_to_write,
-                        officer_id,
-                        final_status,
-                        summons_total,
-                        json.dumps(plate_info["summons"])
-                    ))
-                    cursor.execute("""
-                        INSERT INTO plate_history
-                            (plate, timestamp, image_path, latitude, longitude, officer_id)
-                        VALUES
-                            (%s, %s, %s, %s, %s, %s)
-                    """, (
-                        plate_number,
-                        timestamp,
-                        snapshot_path,
-                        lat_to_write,
-                        lon_to_write,
-                        officer_id
-                    ))
-                db.commit()
-                db.close()
-                print("✅ Plate saved to DB")
-            except Exception as e:
-                print("❌ Failed to insert plate into DB:", e)
-
-        frame_queue.task_done()
+    except Exception as e:
+        print("❌ upload_snapshot_to_azure error:", e)
+        return None
 
 # ✅ Helper to send data to dashboard (Async/threaded version)
 def send_plate_to_dashboard(plate_info):
@@ -582,9 +611,24 @@ def process_frame_logic(frame, label):
         if not plate_number:
             continue
 
-        # Skip duplicates within cooldown
-        if is_duplicate_plate(plate_number, cooldown=DUP_COOLDOWN_S):
-            print(f"[{label}] ⚠️ Recently detected {plate_number}, skipping duplicate.")
+    # ✅ DEMO RULE:
+    # If plate NOT in allowed list -> show PUTRAJAYA1234
+        if DEMO_MODE and plate_number not in DEMO_ALLOWED_PLATES:
+            next_fb = get_next_demo_fallback_plate()
+
+    # ✅ fallback only for first 2 unknowns
+            if next_fb:
+                print(f"[{label}] 🧪 DEMO fallback: {plate_number} -> {next_fb}")
+                plate_number = next_fb
+            else:
+                # ✅ after PUTRAJAYA1234 + PATRIOT1234, allow normal real detection
+                print(f"[{label}] 🧪 DEMO fallback finished. Keep real plate: {plate_number}")
+
+    # ✅ Detect ONCE until reset for ALL plates (including PUTRAJAYA1234)
+    # This will stop PUTRAJAYA1234 from spamming rows,
+    # but other plates will still be allowed because they are different strings.
+        if should_skip_plate_once_until_reset(plate_number):
+            print(f"[{label}] ⛔ Duplicate (until reset): {plate_number}, skipped.")
             continue
 
         # --- Snapshot ---
@@ -608,6 +652,13 @@ def process_frame_logic(frame, label):
             lon_to_write = cur_lon
 
         officer_id = stored_officer_id
+        parking_rights_zone = stored_parking_rights_zone
+        parking_area = stored_parking_area
+
+        camera_info = get_camera_info(label)
+        client_device = CLIENT_DEVICE
+        camera_side = camera_info["camera_side"]
+        camera_direction = camera_info["camera_direction"]
 
         # --- Parking & Summons ---
         try:
@@ -624,32 +675,51 @@ def process_frame_logic(frame, label):
 
         # Final status
         if summons_status and isinstance(summons_status, list) and len(summons_status) > 0:
-            final_status = summons_status[0].get("status", "Not Paid")
+            final_status = "Kompaun Tertunggak"
         elif isinstance(parking_status, str) and "Paid until" in parking_status:
             final_status = parking_status
         else:
-            final_status = "Not Paid"
+            final_status = "Tidak Berbayar"
 
         paid_until_val = extract_paid_until_from_status(final_status)
 
-        # Build a safe snapshot URL (thread-safe fallback)
-        try:
-            base = f"http://{request.host}"
-        except Exception:
-            base = "http://192.168.8.102:5001"  # <-- change if your Pi IP/port differs
-        snapshot_url = f"{base}/{snapshot_path}" if snapshot_path else None
+        # ===============================
+        # Upload snapshot to Azure first
+        # ===============================
+        snapshot_to_send = None
+
+        if snapshot_path:
+            azure_path = upload_snapshot_to_azure(snapshot_path, snapshot_name)
+            if azure_path:
+                snapshot_to_send = f"{AZURE_DASHBOARD_BASE}{azure_path}"
+
+        # Fallback local URL if Azure upload failed
+        if not snapshot_to_send and snapshot_path:
+            try:
+                base = f"http://{request.host}"
+            except Exception:
+                base = "http://192.168.8.102:5001"
+            snapshot_to_send = f"{base}/{snapshot_path}"
 
         plate_info = {
             "plate": plate_number,
             "status": final_status,
             "summons": summons_status if isinstance(summons_status, list) else [],
             "time": timestamp,
-            "snapshot": snapshot_url,       # keep legacy key
-            "snapshot_url": snapshot_url,   # and new key for UI
+            "snapshot": snapshot_to_send,
+            "snapshot_url": snapshot_to_send,
             "latitude": lat_to_write,
             "longitude": lon_to_write,
             "officer_id": officer_id,
+            "parking_rights_zone": parking_rights_zone,
+            "parking_area": parking_area,
+
+            # camera/device info
+            "client_device": client_device,
+            "camera_side": camera_side,
+            "camera_direction": camera_direction,
             "cam": label,
+
             "paid_until": paid_until_val,
         }
 
@@ -665,11 +735,27 @@ def process_frame_logic(frame, label):
             db = get_db()
             with db.cursor() as cursor:
                 summons_total = len(plate_info["summons"])
+
                 cursor.execute("""
                     INSERT INTO detected_plates
-                        (plate, timestamp, image_path, latitude, longitude, officer_id, status, summons_total, summons_json)
+                        (
+                            plate,
+                            timestamp,
+                            image_path,
+                            latitude,
+                            longitude,
+                            officer_id,
+                            status,
+                            summons_total,
+                            summons_json,
+                            client_device,
+                            camera_side,
+                            camera_direction,
+                            parking_rights_zone,
+                            parking_area
+                        )
                     VALUES
-                        (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, (
                     plate_number,
                     timestamp,
@@ -679,21 +765,45 @@ def process_frame_logic(frame, label):
                     officer_id,
                     final_status,
                     summons_total,
-                    json.dumps(plate_info["summons"])
+                    json.dumps(plate_info["summons"]),
+                    client_device,
+                    camera_side,
+                    camera_direction,
+                    parking_rights_zone,
+                    parking_area
                 ))
+
                 cursor.execute("""
                     INSERT INTO plate_history
-                        (plate, timestamp, image_path, latitude, longitude, officer_id)
+                        (
+                            plate,
+                            timestamp,
+                            image_path,
+                            latitude,
+                            longitude,
+                            officer_id,
+                            client_device,
+                            camera_side,
+                            camera_direction,
+                            parking_rights_zone,
+                            parking_area
+                        )
                     VALUES
-                        (%s, %s, %s, %s, %s, %s)
+                        (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, (
                     plate_number,
                     timestamp,
                     snapshot_path,
                     lat_to_write,
                     lon_to_write,
-                    officer_id
+                    officer_id,
+                    client_device,
+                    camera_side,
+                    camera_direction,
+                    parking_rights_zone,
+                    parking_area
                 ))
+
             db.commit()
             db.close()
             print(f"[{label}] ✅ Plate saved to DB")
@@ -711,21 +821,35 @@ def generate_frames(cam, queue, label="cam"):
         return
 
     count = 0
-    frame_skip = 1  # process every frame
+    frame_skip = 1
 
     while True:
         try:
+            with camera_state_lock:
+                enabled = camera_enabled.get(label, False)
+
+            if not enabled:
+                time.sleep(0.1)
+                continue
+
             frame = cam.capture_array()
             frame = cv2.resize(frame, (640, 480))
+
             count += 1
             if count % frame_skip == 0 and not queue.full():
                 queue.put(frame.copy())
+
             _, buffer = cv2.imencode(".jpg", frame, [int(cv2.IMWRITE_JPEG_QUALITY), 70])
-            yield (b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" +
-                   buffer.tobytes() + b"\r\n")
+            yield (
+                b"--frame\r\n"
+                b"Content-Type: image/jpeg\r\n\r\n" +
+                buffer.tobytes() +
+                b"\r\n"
+            )
+
         except Exception as e:
             print(f"[{label}] ❌ Error capturing frame: {e}")
-            break
+            time.sleep(0.2)
 
 # ---- MJPEG routes for each camera ----
 @app.route("/video_right")  # CAM0
@@ -748,15 +872,31 @@ def plates():
         db = get_db()
         with db.cursor() as cursor:
             cursor.execute("""
-                SELECT id, plate, timestamp, image_path, latitude, longitude, officer_id, status, summons_total, summons_json
-                FROM detected_plates ORDER BY id DESC LIMIT 100
+                SELECT
+                    id,
+                    plate,
+                    timestamp,
+                    image_path,
+                    latitude,
+                    longitude,
+                    officer_id,
+                    status,
+                    summons_total,
+                    summons_json,
+                    client_device,
+                    camera_side,
+                    camera_direction,
+                    parking_rights_zone,
+                    parking_area
+                FROM detected_plates
+                ORDER BY id DESC
+                LIMIT 100
             """)
             rows = cursor.fetchall()
         db.close()
 
         plates_from_db = []
         for row in rows:
-            # Only build URLs if we actually have an image_path
             snapshot_url = None
             if row.get("image_path"):
                 snapshot_url = f"http://{request.host}/{row['image_path']}"
@@ -766,17 +906,23 @@ def plates():
                 "plate": row["plate"],
                 "status": row.get("status", "Not Paid"),
                 "time": row["timestamp"].strftime("%Y-%m-%d %H:%M:%S"),
-                "snapshot_url": snapshot_url,   # <-- use this
+                "snapshot_url": snapshot_url,
                 "snapshot": snapshot_url,
                 "latitude": row["latitude"],
                 "longitude": row["longitude"],
                 "officer_id": row["officer_id"],
+                "client_device": row.get("client_device"),
+                "camera_side": row.get("camera_side"),
+                "camera_direction": row.get("camera_direction"),
+                "parking_rights_zone": row.get("parking_rights_zone"),
+                "parking_area": row.get("parking_area"),
                 "summons": json.loads(row.get("summons_json") or "[]"),
                 "total_summons": row.get("summons_total", 0),
-                "paid_until": extract_paid_until_from_status(row.get("status", "")),  # ✅ expose paid_until
+                "paid_until": extract_paid_until_from_status(row.get("status", "")),
             })
 
         return jsonify(plates_from_db)
+
     except Exception as e:
         print("❌ Error loading plates from DB:", e)
         return jsonify([]), 500
@@ -840,6 +986,39 @@ def get_user():
         stored_officer_id = session.get("officer_id", "Unknown")
         return jsonify({"username": session.get("username"), "officer_id": stored_officer_id})
     return jsonify({"error": "Not logged in"}), 401
+
+@app.route("/api/set-parking-zone", methods=["POST"])
+def set_parking_zone():
+    global stored_parking_rights_zone, stored_parking_area
+
+    if "user_id" not in session:
+        return jsonify({
+            "status": "error",
+            "message": "Not logged in."
+        }), 401
+
+    data = request.get_json(force=True) or {}
+
+    zone = (data.get("parking_rights_zone") or "").strip().upper()
+    area = (data.get("parking_area") or "").strip().upper()
+
+    if not zone or not area:
+        return jsonify({
+            "status": "error",
+            "message": "Parking zone and area are required."
+        }), 400
+
+    session["parking_rights_zone"] = zone
+    session["parking_area"] = area
+
+    stored_parking_rights_zone = zone
+    stored_parking_area = area
+
+    return jsonify({
+        "status": "success",
+        "parking_rights_zone": zone,
+        "parking_area": area
+    })
 
 @app.route("/summons", methods=["GET"])
 def get_summons():
@@ -1256,6 +1435,13 @@ def reset_queue():
             with lock:
                 detected_plates.clear()
 
+            with seen_lock:
+                seen_plates.clear()
+
+            global _demo_fallback_idx
+            with _demo_fallback_lock:
+                _demo_fallback_idx = 0
+
             # 3. Delete and recreate snapshots folder (faster cleanup)
             snapshot_folder = app.config["SNAPSHOT_FOLDER"]
             if os.path.exists(snapshot_folder):
@@ -1304,16 +1490,36 @@ def sync_offline_data():
     successful = []
     for item in queue:
         try:
-            if item["type"] == "plate":
-                res = requests.post("http://52.163.74.67:5002/api/receive-plate", json=item["data"], timeout=5)
-            elif item["type"] == "gps":
-                res = requests.post("http://52.163.74.67:5002/api/gps", json=item["data"], timeout=5)
+            t = item.get("type")
+
+            if t == "plate":
+                res = requests.post("http://52.163.74.67:5002/api/receive-plate",
+                                    json=item["data"], timeout=8)
+
+            elif t == "gps":
+                res = requests.post("http://52.163.74.67:5002/api/gps",
+                                    json=item["data"], timeout=8)
+
+            elif t == "snapshot":
+                d = item.get("data") or {}
+                local_path = d.get("local_path")
+                filename = d.get("filename")
+
+                if not local_path or not filename or not os.path.exists(local_path):
+                    continue
+
+                with open(local_path, "rb") as fimg:
+                    files = {"file": (filename, fimg, "image/jpeg")}
+                    res = requests.post(AZURE_UPLOAD_URL, files=files, timeout=10)
+
             else:
                 continue
 
             if res.status_code == 200:
                 successful.append(item)
-        except:
+
+        except Exception as e:
+            print("❌ sync_offline_data item failed:", e)
             continue
 
     remaining = [q for q in queue if q not in successful]
@@ -1330,34 +1536,137 @@ def start_sync_loop():
 # Start offline sync loop
 start_sync_loop()
 
+@app.route('/start-cam0', methods=['POST'])
+def start_cam0():
+    with camera_state_lock:
+        camera_enabled["cam0"] = True
+
+    return jsonify({
+        "status": "success",
+        "message": "✅ CAM0 started"
+    })
+
+
+@app.route('/stop-cam0', methods=['POST'])
+def stop_cam0():
+    with camera_state_lock:
+        camera_enabled["cam0"] = False
+
+    while not frame_queue0.empty():
+        try:
+            frame_queue0.get_nowait()
+            frame_queue0.task_done()
+        except Exception:
+            break
+
+    return jsonify({
+        "status": "success",
+        "message": "🛑 CAM0 stopped"
+    })
+
+
+@app.route('/start-cam1', methods=['POST'])
+def start_cam1():
+    with camera_state_lock:
+        camera_enabled["cam1"] = True
+
+    return jsonify({
+        "status": "success",
+        "message": "✅ CAM1 started"
+    })
+
+
+@app.route('/stop-cam1', methods=['POST'])
+def stop_cam1():
+    with camera_state_lock:
+        camera_enabled["cam1"] = False
+
+    while not frame_queue1.empty():
+        try:
+            frame_queue1.get_nowait()
+            frame_queue1.task_done()
+        except Exception:
+            break
+
+    return jsonify({
+        "status": "success",
+        "message": "🛑 CAM1 stopped"
+    })
+
+def is_process_running(keyword):
+    try:
+        result = subprocess.run(
+            ["pgrep", "-f", keyword],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
+        )
+        return result.returncode == 0
+    except Exception:
+        return False
+
 @app.route('/start-all', methods=['POST'])
 def start_all_services():
     try:
-        # DO NOT start this same file again
-        # subprocess.Popen(['python3', '/home/lpr/Desktop/lpr-project/live_detection_service/lpr.py'],
-        #                  stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        with camera_state_lock:
+            camera_enabled["cam0"] = True
+            camera_enabled["cam1"] = True
 
-        subprocess.Popen(['python3', '/home/lpr/Desktop/lpr-project/live_detection_service/gps_tracker.py'],
-                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        subprocess.Popen(['node', '/home/lpr/Desktop/lpr-project/live_detection_service/server.js'],
-                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        subprocess.Popen(['python3', '/home/lpr/Desktop/lpr-project/dashboard_service/dashboard.py'],
-                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        if not is_process_running("gps_tracker.py"):
+            subprocess.Popen(
+                ['python3', '/home/lpr/Desktop/lpr-project/live_detection_service/gps_tracker.py'],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL
+            )
+
+        if not is_process_running("server.js"):
+            subprocess.Popen(
+                ['node', '/home/lpr/Desktop/lpr-project/live_detection_service/server.js'],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL
+            )
+
+        if not is_process_running("dashboard.py"):
+            subprocess.Popen(
+                ['python3', '/home/lpr/Desktop/lpr-project/dashboard_service/dashboard.py'],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL
+            )
+
         return jsonify({"message": "✅ All services started successfully!"})
     except Exception as e:
+        print(f"❌ Error in /start-all: {e}")
         return jsonify({"message": f"❌ Error starting services: {e}"}), 500
-
 
 @app.route('/stop-all', methods=['POST'])
 def stop_all_services():
     try:
-        os.system("pkill -f /home/lpr/Desktop/lpr-project/live_detection_service/lpr.py")
+        with camera_state_lock:
+            camera_enabled["cam0"] = False
+            camera_enabled["cam1"] = False
+
+        while not frame_queue0.empty():
+            try:
+                frame_queue0.get_nowait()
+                frame_queue0.task_done()
+            except Exception:
+                break
+
+        while not frame_queue1.empty():
+            try:
+                frame_queue1.get_nowait()
+                frame_queue1.task_done()
+            except Exception:
+                break
+
         os.system("pkill -f /home/lpr/Desktop/lpr-project/live_detection_service/gps_tracker.py")
         os.system("pkill -f /home/lpr/Desktop/lpr-project/live_detection_service/server.js")
         os.system("pkill -f /home/lpr/Desktop/lpr-project/dashboard_service/dashboard.py")
+
         return jsonify({"message": "✅ All services stopped successfully!"})
     except Exception as e:
+        print(f"❌ Error in /stop-all: {e}")
         return jsonify({"message": f"❌ Error stopping services: {e}"}), 500
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5001, debug=False)

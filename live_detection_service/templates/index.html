@@ -79,27 +79,184 @@
             display: block;
         }
 
-        .dashboard {
+        :root {
+            --primary: #031d67;
+            --primary-dark: #02154d;
+            --bg: #f5f7fb;
+            --card: #ffffff;
+            --border: #e5e7eb;
+            --text: #111827;
+            --muted: #6b7280;
+            --success: #16a34a;
+            --danger: #dc2626;
+            --warning: #f59e0b;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        header {
+            background-color: #fff;
+            padding: 14px 24px;
+            box-shadow: 0 1px 8px rgba(15, 23, 42, 0.08);
             display: flex;
-            gap: 20px;
-            padding: 20px;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .title {
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--primary);
+            letter-spacing: -0.2px;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 22px;
+            padding: 22px;
         }
 
         .left,
         .right {
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
-
-        .left {
-            flex: 1;
+            background: var(--card);
+            border-radius: 16px;
+            padding: 22px;
+            border: 1px solid var(--border);
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
         }
 
         .right {
-            flex: 1;
             overflow-x: auto;
+        }
+
+        h2 {
+            margin: 0 0 16px;
+            font-size: 22px;
+            color: #020617;
+            letter-spacing: -0.4px;
+        }
+
+        .section-label {
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: #334155;
+            font-size: 14px;
+        }
+
+        .streams {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+        .panel h3 {
+            margin: 0 0 8px;
+            color: var(--primary);
+            font-size: 14px;
+            font-weight: 800;
+        }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            height: 500px;
+            border-radius: 14px;
+            overflow: hidden;
+            background: #020617;
+            border: 1px solid #111827;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+        }
+
+        .controls {
+            margin-top: 16px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 14px;
+            border: none;
+            border-radius: 9px;
+            color: white;
+            cursor: pointer;
+            margin-right: 0;
+            font-weight: 800;
+            font-size: 13px;
+            transition: 0.18s ease;
+            box-shadow: 0 4px 10px rgba(15, 23, 42, 0.12);
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            opacity: 0.95;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn.start {
+            background-color: var(--success);
+        }
+
+        .btn.stop {
+            background-color: var(--danger);
+        }
+
+        .btn.reset {
+            background-color: var(--warning);
+        }
+
+        .btn.secondary {
+            background-color: var(--primary);
+        }
+
+        .btn.secondary:hover {
+            background-color: var(--primary-dark);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-top: 10px;
+            font-size: 14px;
+            overflow: hidden;
+            border-radius: 12px;
+        }
+
+        th,
+        td {
+            padding: 11px 10px;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+            border-right: 1px solid var(--border);
+        }
+
+        th:first-child,
+        td:first-child {
+            border-left: 1px solid var(--border);
+        }
+
+        th {
+            background-color: var(--primary);
+            color: white;
+            font-weight: 800;
+            border-color: rgba(255, 255, 255, 0.25);
+        }
+
+        tbody tr:hover {
+            background: #f8fafc;
         }
 
         /* Two-up camera grid */
@@ -441,6 +598,42 @@
             }
         }
 
+        /* Zone / Kawasan selector */
+        .zone-panel {
+            margin: 14px 0 16px;
+            padding: 14px;
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+        }
+
+        .zone-panel label {
+            display: block;
+            font-size: 13px;
+            font-weight: 800;
+            color: #031d67;
+            margin-bottom: 6px;
+        }
+
+        .zone-panel select {
+            width: 100%;
+            max-width: 520px;
+            height: 40px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 0 10px;
+            font-weight: 700;
+            color: #111827;
+            background: white;
+        }
+
+        .zone-note {
+            margin-top: 7px;
+            font-size: 12px;
+            font-weight: 700;
+            color: #64748b;
+        }
+
         /* GPS indicator */
         .gps {
             display: flex;
@@ -496,13 +689,13 @@
         <div class="left">
             <h2>Siaran Langsung</h2>
             <div>
-                <div style="font-weight: bold; margin-bottom: 5px;">📷 Kamera</div>
+                <div class="section-label">📷 Kamera Aktif</div>
 
                 <!-- Dual streams -->
                 <div class="streams">
                     <!-- Right camera (CAM0) -->
                     <div class="panel">
-                        <h3 style="margin:0 0 6px;color:#031d67;font-size:14px">CAM0 — Kanan</h3>
+                        <h3 style="margin:0 0 6px;color:#031d67;font-size:14px">CAM0 — Kiri</h3>
                         <div class="video-container">
                             <img id="imgRight" src="" data-src="/video_right" alt="Right Camera Stream">
                             <div class="placeholder" id="phRight">Tiada siaran — klik <b>Mula</b></div>
@@ -514,7 +707,7 @@
 
                     <!-- Left camera (CAM1) -->
                     <div class="panel">
-                        <h3 style="margin:0 0 6px;color:#031d67;font-size:14px">CAM1 — Kiri</h3>
+                        <h3 style="margin:0 0 6px;color:#031d67;font-size:14px">CAM1 — Kanan</h3>
                         <div class="video-container">
                             <img id="imgLeft" src="" data-src="/video_left" alt="Left Camera Stream">
                             <div class="placeholder" id="phLeft">Tiada siaran — klik <b>Mula</b></div>
@@ -525,10 +718,124 @@
                     </div>
                 </div>
 
+                <!-- Zone / Kawasan Selection -->
+                <div class="zone-panel">
+                    <label for="parkingZone">Kawasan / Zone</label>
+
+                    <select id="parkingZone" onchange="handleZoneChange()">
+                        <option value="">-- Pilih Kawasan --</option>
+
+                        <optgroup label="ZON A">
+                            <option value="ZON A|JALAN KAMPONG CINA">JALAN KAMPONG CINA</option>
+                            <option value="ZON A|JALAN PESISIR PAYANG">JALAN PESISIR PAYANG</option>
+                            <option value="ZON A|JALAN SULTAN ZAINAL ABIDIN">JALAN SULTAN ZAINAL ABIDIN</option>
+                            <option value="ZON A|JALAN WARISAN TANJUNG 1">JALAN WARISAN TANJUNG 1</option>
+                            <option value="ZON A|PULAU WARISAN">PULAU WARISAN</option>
+                        </optgroup>
+
+                        <optgroup label="ZON B">
+                            <option value="ZON B|BUKIT KELEDANG">BUKIT KELEDANG</option>
+                            <option value="ZON B|JALAN AIR JERNIH">JALAN AIR JERNIH</option>
+                            <option value="ZON B|JALAN BALIK BUKIT">JALAN BALIK BUKIT</option>
+                            <option value="ZON B|JALAN BANGGOL">JALAN BANGGOL</option>
+                            <option value="ZON B|JALAN BATAS BARU">JALAN BATAS BARU</option>
+                            <option value="ZON B|JALAN ENGKU PENGIRAN ANOM">JALAN ENGKU PENGIRAN ANOM</option>
+                            <option value="ZON B|JALAN ENGKU SAR">JALAN ENGKU SAR</option>
+                            <option value="ZON B|JALAN KAMPUNG TIONG">JALAN KAMPUNG TIONG</option>
+                            <option value="ZON B|JALAN KOTA LAMA">JALAN KOTA LAMA</option>
+                            <option value="ZON B|JALAN SULTAN ISMAIL">JALAN SULTAN ISMAIL</option>
+                            <option value="ZON B|LORONG HAJI JAMIL">LORONG HAJI JAMIL</option>
+                        </optgroup>
+
+                        <optgroup label="ZON C">
+                            <option value="ZON C|JALAN DATO' ISAACS">JALAN DATO' ISAACS</option>
+                            <option value="ZON C|JALAN KAMPUNG DAIK">JALAN KAMPUNG DAIK</option>
+                            <option value="ZON C|JALAN KOTA">JALAN KOTA</option>
+                            <option value="ZON C|JALAN MASJID ABIDIN">JALAN MASJID ABIDIN</option>
+                            <option value="ZON C|JALAN PETANI">JALAN PETANI</option>
+                            <option value="ZON C|JALAN SULTAN ISMAIL">JALAN SULTAN ISMAIL</option>
+                            <option value="ZON C|JALAN SULTAN SULAIMAN">JALAN SULTAN SULAIMAN</option>
+                            <option value="ZON C|JALAN SYED HUSSEIN">JALAN SYED HUSSEIN</option>
+                            <option value="ZON C|JALAN TOK LAM">JALAN TOK LAM</option>
+                        </optgroup>
+
+                        <optgroup label="ZON D">
+                            <option value="ZON D|JALAN BUKIT KECIL">JALAN BUKIT KECIL</option>
+                            <option value="ZON D|JALAN HILIRAN">JALAN HILIRAN</option>
+                            <option value="ZON D|JALAN PEJABAT">JALAN PEJABAT</option>
+                            <option value="ZON D|JALAN PUSARA">JALAN PUSARA</option>
+                            <option value="ZON D|JALAN SULTAN ISMAIL">JALAN SULTAN ISMAIL</option>
+                            <option value="ZON D|JALAN SULTAN MAHMUD">JALAN SULTAN MAHMUD</option>
+                            <option value="ZON D|JALAN SULTAN OMAR">JALAN SULTAN OMAR</option>
+                            <option value="ZON D|JALAN TENGKU AMPUAN MARIAM">JALAN TENGKU AMPUAN MARIAM</option>
+                            <option value="ZON D|JALAN TOK KU">JALAN TOK KU</option>
+                        </optgroup>
+
+                        <optgroup label="ZON E">
+                            <option value="ZON E|DATARAN TEMBESU">DATARAN TEMBESU</option>
+                            <option value="ZON E|JALAN GONG PAK DAMAT">JALAN GONG PAK DAMAT</option>
+                            <option value="ZON E|JALAN RIMBA SQUARE">JALAN RIMBA SQUARE</option>
+                            <option value="ZON E|LORONG TEMBESU 1">LORONG TEMBESU 1</option>
+                            <option value="ZON E|LORONG TEMBESU 2">LORONG TEMBESU 2</option>
+                            <option value="ZON E|LORONG TEMBESU 3">LORONG TEMBESU 3</option>
+                            <option value="ZON E|LORONG TEMBESU 4">LORONG TEMBESU 4</option>
+                            <option value="ZON E|LORONG TEMBESU 5">LORONG TEMBESU 5</option>
+                            <option value="ZON E|LORONG TEMBESU 6">LORONG TEMBESU 6</option>
+                        </optgroup>
+
+                        <optgroup label="ZON F">
+                            <option value="ZON F|JALAN GONG PAK DAMAT">JALAN GONG PAK DAMAT</option>
+                            <option value="ZON F|JALAN RIMBA SQUARE">JALAN RIMBA SQUARE</option>
+                        </optgroup>
+
+                        <optgroup label="KUALA TERENGGANU">
+                            <option value="KUALA TERENGGANU|BANDAR BARU PULAU KAMBING">BANDAR BARU PULAU KAMBING
+                            </option>
+                            <option value="KUALA TERENGGANU|BATAS BARU">BATAS BARU</option>
+                            <option value="KUALA TERENGGANU|BEMBAN">BEMBAN</option>
+                            <option value="KUALA TERENGGANU|BGN TLK KEDAI PAYANG">BGN TLK KEDAI PAYANG</option>
+                            <option value="KUALA TERENGGANU|CABANG TIGA">CABANG TIGA</option>
+                            <option value="KUALA TERENGGANU|JALAN AIR JERNIH">JALAN AIR JERNIH</option>
+                            <option value="KUALA TERENGGANU|JALAN BALIK BUKIT">JALAN BALIK BUKIT</option>
+                            <option value="KUALA TERENGGANU|JALAN BANDAR">JALAN BANDAR</option>
+                            <option value="KUALA TERENGGANU|JALAN BANGGOL">JALAN BANGGOL</option>
+                            <option value="KUALA TERENGGANU|JALAN BATAS BARU">JALAN BATAS BARU</option>
+                            <option value="KUALA TERENGGANU|JALAN BUKIT KECIL">JALAN BUKIT KECIL</option>
+                            <option value="KUALA TERENGGANU|JALAN DATO ISAACS">JALAN DATO ISAACS</option>
+                            <option value="KUALA TERENGGANU|JALAN ENGKU SAR">JALAN ENGKU SAR</option>
+                            <option value="KUALA TERENGGANU|JALAN HILIRAN">JALAN HILIRAN</option>
+                            <option value="KUALA TERENGGANU|JALAN JAIL">JALAN JAIL</option>
+                        </optgroup>
+
+                        <optgroup label="KUALA NERUS">
+                            <option value="KUALA NERUS|BANGGOL AIR LILIH">BANGGOL AIR LILIH</option>
+                            <option value="KUALA NERUS|BANGGOL NIYOR">BANGGOL NIYOR</option>
+                            <option value="KUALA NERUS|BANGGOL PAUH">BANGGOL PAUH</option>
+                            <option value="KUALA NERUS|BANGGOL TOK JIRING">BANGGOL TOK JIRING</option>
+                            <option value="KUALA NERUS|BATU 6">BATU 6</option>
+                            <option value="KUALA NERUS|BATU 8, JALAN KELANTAN">BATU 8, JALAN KELANTAN</option>
+                            <option value="KUALA NERUS|BUKIT BERANGAN">BUKIT BERANGAN</option>
+                            <option value="KUALA NERUS|BUKIT DATU">BUKIT DATU</option>
+                            <option value="KUALA NERUS|BUKIT KANDIS">BUKIT KANDIS</option>
+                            <option value="KUALA NERUS|BUKIT KUBANG JAMBU">BUKIT KUBANG JAMBU</option>
+                            <option value="KUALA NERUS|GONG BADAK">GONG BADAK</option>
+                        </optgroup>
+                    </select>
+
+                    <div id="selectedZoneText" class="zone-note">Belum pilih kawasan</div>
+                </div>
+
                 <!-- Controls -->
                 <div class="controls">
-                    <button class="btn start" onclick="startAllServices()">Mula</button>
-                    <button class="btn stop" onclick="stopAllServices()">Henti</button>
+                    <button class="btn start" onclick="startCameraRight()">Mula CAM0 Kiri</button>
+                    <button class="btn stop" onclick="stopCameraRight()">Henti CAM0 Kiri</button>
+
+                    <button class="btn start" onclick="startCameraLeft()">Mula CAM1 Kanan</button>
+                    <button class="btn stop" onclick="stopCameraLeft()">Henti CAM1 Kanan</button>
+
+                    <button class="btn secondary" onclick="startAllServices()">Mula Semua</button>
+                    <button class="btn stop" onclick="stopAllServices()">Henti Semua</button>
+
                     <button class="btn reset" onclick="resetSystem()">Set</button>
                 </div>
 
@@ -616,7 +923,7 @@
 
                 const delBtn = `
   <button class="icon-btn danger" title="Hapus"
-          onclick="deletePlate('${entry.id || ''}','${entry.plate}', this)">
+          onclick="deletePlate('${entry.event_uuid || ''}', '${entry.id || ''}', '${entry.plate}', this)">
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
       <path d="M9 3h6a1 1 0 0 1 1 1v1h4v2H4V5h4V4a1 1 0 0 1 1-1zm1 5h2v10h-2V8zm4 0h2v10h-2V8zM7 8h2v10H7V8z"/>
     </svg>
@@ -679,6 +986,114 @@
             stopStreamFor(imgLeft, phLeft, loadLeft);
         }
 
+        let selectedParkingZone = "";
+        let selectedParkingArea = "";
+
+        async function handleZoneChange() {
+            const select = document.getElementById("parkingZone");
+            const text = document.getElementById("selectedZoneText");
+
+            if (!select.value) {
+                selectedParkingZone = "";
+                selectedParkingArea = "";
+                text.textContent = "Belum pilih kawasan";
+                return;
+            }
+
+            const [zone, area] = select.value.split("|");
+
+            selectedParkingZone = zone;
+            selectedParkingArea = area;
+
+            text.textContent = `${zone} - ${area}`;
+
+            try {
+                const res = await fetch("/api/set-parking-zone", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        parking_rights_zone: selectedParkingZone,
+                        parking_area: selectedParkingArea
+                    })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok || data.status !== "success") {
+                    throw new Error(data.message || "Gagal set kawasan.");
+                }
+
+                console.log("✅ Kawasan dipilih:", data);
+            } catch (err) {
+                console.error("❌ Gagal set kawasan:", err);
+                alert("Gagal set kawasan. Sila pilih semula.");
+            }
+        }
+
+        function requireParkingZone() {
+            if (!selectedParkingZone || !selectedParkingArea) {
+                alert("Sila pilih Kawasan / Zone dahulu sebelum mula scan.");
+                return false;
+            }
+            return true;
+        }
+
+        function startCameraRight() {
+            if (!requireParkingZone()) return;
+
+            fetch('/start-cam0', { method: 'POST' })
+                .then(() => {
+                    startStreamFor(imgRight, phRight, loadRight);
+                    refreshGPS();
+                    fetchData();
+                    startPolling();
+                })
+                .catch(err => {
+                    console.error("❌ Error starting CAM0:", err);
+                    alert("CAM0 gagal dimulakan.");
+                });
+        }
+
+        function stopCameraRight() {
+            fetch('/stop-cam0', { method: 'POST' })
+                .then(() => {
+                    stopStreamFor(imgRight, phRight, loadRight);
+                })
+                .catch(err => {
+                    console.error("❌ Error stopping CAM0:", err);
+                    alert("CAM0 gagal dihentikan.");
+                });
+        }
+
+        function startCameraLeft() {
+            if (!requireParkingZone()) return;
+
+            fetch('/start-cam1', { method: 'POST' })
+                .then(() => {
+                    startStreamFor(imgLeft, phLeft, loadLeft);
+                    refreshGPS();
+                    fetchData();
+                    startPolling();
+                })
+                .catch(err => {
+                    console.error("❌ Error starting CAM1:", err);
+                    alert("CAM1 gagal dimulakan.");
+                });
+        }
+
+        function stopCameraLeft() {
+            fetch('/stop-cam1', { method: 'POST' })
+                .then(() => {
+                    stopStreamFor(imgLeft, phLeft, loadLeft);
+                })
+                .catch(err => {
+                    console.error("❌ Error stopping CAM1:", err);
+                    alert("CAM1 gagal dihentikan.");
+                });
+        }
+
         // Initial placeholders on page load
         showPlaceholder(imgRight, phRight, loadRight, 'Tiada siaran — klik <b>Mula</b>');
         showPlaceholder(imgLeft, phLeft, loadLeft, 'Tiada siaran — klik <b>Mula</b>');
@@ -688,25 +1103,22 @@
         }
 
         async function resetSystem() {
-            if (!confirm("Tetap semula sistem?")) return;
+            if (!confirm("Tetap semula sistem (Siaran Langsung sahaja)?")) return;
 
             try {
                 setButtonsDisabled(true);
 
-                // Tell both devices to clear queues (local + remote).
-                await Promise.all([
-                    fetch('/reset-queue', { method: 'POST' }),
-                    fetch('http://192.168.8.102:5001/reset-queue', { method: 'POST' }) // <- remove if you don't have Pi1
-                ]).then(rs => Promise.all(rs.map(r => r.json())));
+                // ✅ Clear only this Pi’s in-memory list (and local-only snapshots if you kept that on the backend)
+                await fetch('/reset-queue', { method: 'POST' });
 
-                // Immediately clear UI + cache so plates "hilang" right away
+                // Clear table immediately
                 lastPlates = null;
                 renderRows([]);
 
-                // Optionally pull again (will stay empty until new detections arrive)
+                // Stay empty until new detections arrive
                 await fetchData();
 
-                alert("✅ Plat dibersihkan.");
+                alert("✅ Plat (Siaran Langsung) dibersihkan.");
             } catch (err) {
                 console.error("❌ Reset failed:", err);
                 alert("Tetap semula gagal. Rujuk konsol untuk butiran.");
@@ -716,38 +1128,42 @@
         }
 
         function startAllServices() {
-            Promise.all([
-                fetch('/start-all', { method: 'POST' }),
-                fetch('http://192.168.8.102:5001/start-all', { method: 'POST' })
-            ])
-                .then(async (responses) => {
-                    // proceed even if there’s no JSON body
-                    const ok = responses.every(r => r.ok);
-                    if (!ok) console.warn('Start endpoints responded but not OK.');
-                    startLiveStreams();       // kick off both image streams
+            if (!requireParkingZone()) return;
+
+            fetch('/start-all', { method: 'POST' })
+                .then(async (response) => {
+                    if (!response.ok) console.warn('Start endpoint responded but not OK.');
+
+                    startLiveStreams();
                     refreshGPS();
                     await fetchData();
                     startPolling();
-                    alert("✅ Dimulakan.");
+
+                    alert("✅ Semua kamera dimulakan.");
                 })
-                .catch(err => console.error("❌ Error starting services:", err));
+                .catch(err => {
+                    console.error("❌ Error starting services:", err);
+                    alert("Gagal memulakan semua kamera.");
+                });
         }
 
         function stopAllServices() {
-            Promise.all([
-                fetch('/stop-all', { method: 'POST' }),
-                fetch('http://192.168.8.102:5001/stop-all', { method: 'POST' })
-            ])
-                .then((responses) => {
-                    const ok = responses.every(r => r.ok);
-                    if (!ok) console.warn('Stop endpoints responded but not OK.');
+            fetch('/stop-all', { method: 'POST' })
+                .then((response) => {
+                    if (!response.ok) console.warn('Stop endpoint responded but not OK.');
+
                     stopLiveStreams();
                     stopPolling();
+
                     document.getElementById('gps-indicator').className = 'gps off';
                     document.getElementById('gps-text').textContent = 'GPS: Tidak dikesan';
-                    alert("🛑 Dihentikan.");
+
+                    alert("🛑 Semua kamera dihentikan.");
                 })
-                .catch(err => console.error("❌ Error stopping services:", err));
+                .catch(err => {
+                    console.error("❌ Error stopping services:", err);
+                    alert("Gagal menghentikan semua kamera.");
+                });
         }
 
 
@@ -774,7 +1190,7 @@
 
         async function fetchData() {
             try {
-                const plates = await fetch('/plates').then(r => r.json());
+                const plates = await fetch('/api/received-plates').then(r => r.json());
 
                 const rows = (plates || []).map(p => {
                     const totalSummons =
@@ -783,7 +1199,6 @@
                     const raw = (p.status || "Not Paid").toLowerCase();
                     const isScofflaw = (totalSummons > 0) || raw.includes("scofflaw");
 
-                    // baca tarikh sah/hingga (jika backend hantar)
                     const paidUntilRaw = p.paid_until || p.valid_until || p.expiry || p.expiry_date || p.paid_until_date;
                     const paidUntilFmt = formatDateLikeBackend(paidUntilRaw);
                     const paidUntilTs = paidUntilFmt ? new Date(paidUntilFmt.replace(' ', 'T')).getTime() : null;
@@ -794,11 +1209,9 @@
                         statusCode = "scofflaw";
                         statusLabel = "Kompaun Tertunggak";
                     } else if (paidUntilTs != null && paidUntilTs >= nowTs) {
-                        // ✅ Tunjuk "Berbayar sehingga ..." bila ada paid_until & masih sah
                         statusCode = "paid";
                         statusLabel = `Berbayar sehingga<br><span class="nowrap">${paidUntilFmt}</span>`;
                     } else if (raw.includes("paid") && !raw.includes("not")) {
-                        // fallback jika backend lama hanya hantar teks 'paid'
                         statusCode = "paid";
                         statusLabel = "Berbayar";
                     } else {
@@ -807,7 +1220,8 @@
                     }
 
                     return {
-                        id: p.id,
+                        event_uuid: p.event_uuid || null,           // 👈 ADD
+                        id: p.id,                                   // (legacy fallback)
                         plate: p.plate,
                         status: statusLabel,
                         statusCode,
@@ -1005,23 +1419,28 @@
                 .catch(error => console.error("❌ Error fetching summons data:", error));
         };
 
-        async function deletePlate(id, plate, btn) {
+        async function deletePlate(event_uuid, id, plate, btn) {
             if (!confirm(`Delete ${plate}?`)) return;
 
             const row = btn.closest('tr');
             btn.disabled = true;
 
-            // Pause polling to avoid the row being re-added mid-delete
+            // Pause polling to avoid flicker
             stopPolling();
 
             // Optimistic UI: remove immediately
             if (row) row.remove();
 
+            // Prefer event_uuid; fall back to id, then plate (legacy)
+            const payload = event_uuid
+                ? { event_uuid }
+                : (id ? { id } : { plate });
+
             try {
                 const res = await fetch('/api/delete-plate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id, plate })
+                    body: JSON.stringify(payload)
                 });
                 const data = await res.json();
 
@@ -1029,15 +1448,21 @@
                     throw new Error(data.message || 'Delete failed');
                 }
 
-                // Also remove from our cached fallback so it won’t “come back”
+                // Keep client cache in sync
                 if (lastPlates) {
-                    lastPlates = lastPlates.filter(p => (p.id ?? p.plate) !== (id ?? plate));
+                    if (event_uuid) {
+                        lastPlates = lastPlates.filter(p => p.event_uuid !== event_uuid);
+                    } else if (id) {
+                        lastPlates = lastPlates.filter(p => String(p.id) !== String(id));
+                    } else {
+                        lastPlates = lastPlates.filter(p => p.plate !== plate);
+                    }
                 }
             } catch (e) {
                 alert('Delete failed: ' + e.message);
             } finally {
-                await fetchData();  // sync table with DB
-                startPolling();     // resume
+                await fetchData();  // sync table with backend
+                startPolling();     // resume polling
             }
         }
         window.deletePlate = deletePlate;

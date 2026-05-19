@@ -4,3 +4,23 @@ __pycache__/
 *.pyo
 *.pyd
 .env
+
+# Runtime files
+live_detection_service/gps_log.json
+live_detection_service/static/snapshots/
+live_detection_service/static/uploads/
+logs/
+*.log
+
+# Node
+node_modules/
+
+# Database backups
+*.sql
+*.db
+
+# Media/generated files
+*.jpg
+*.jpeg
+*.png
+*.mp4
